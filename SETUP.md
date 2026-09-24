@@ -82,8 +82,11 @@ npm run dev
 Open http://localhost:3000 → Register → check email → confirm → land on `/dashboard`.
 
 ### Smoke test
-- `GET http://localhost:8000/api/v1/health` → `{"status":"ok"}`
-- `GET http://localhost:8000/api/v1/health/db` → `{"status":"ok","db":"ok"}` (confirms DB + pooler)
+- `GET https://<render-url>/api/v1/health` → `{"status":"ok"}` (app up, port bound)
+- `GET https://<render-url>/api/v1/health/db` → `{"status":"ok","db":"ok"}` (DB + pooler)
+- `GET https://<render-url>/api/v1/health/status` → **one-glance diagnostics**: database
+  reachable, all 5 tables present, reserved usernames seeded, auth configured. Open it in a
+  browser (mobile is fine) to see exactly what's still missing — it leaks no secrets or data.
 - Register a user → a `profiles` row + a draft `portfolios` row appear automatically.
 - In the dashboard: pick a username, edit profile, hit Publish.
 
@@ -92,9 +95,17 @@ Open http://localhost:3000 → Register → check email → confirm → land on 
 ## 8. Deploy
 ### Backend → Render
 - New **Web Service**, connect the repo, root dir `folio-backend` (or use `render.yaml`).
-- Build: `pip install -r requirements.txt`  ·  Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- Add all backend env vars. Set `APP_ENV=production`, `CORS_ORIGINS=https://your-vercel-app.vercel.app`,
-  and the three URL vars to the deployed URLs. Health check path: `/api/v1/health`.
+- **Start Command (must be exactly this):** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+  — or, simplest and foolproof: `python start.py`. Do **NOT** use `--reload` and do **NOT**
+  hardcode a port; Render injects `$PORT` and the app must listen on `0.0.0.0`, or Render reports
+  "No open ports detected" and the deploy fails.
+- **Build Command:** `pip install -r requirements.txt`  ·  **Health Check Path:** `/api/v1/health`
+- **Environment variables — add ALL of these** (Environment tab). Without `DATABASE_URL` the app
+  crashes on boot with `RuntimeError: DATABASE_URL is not set`:
+  `PYTHON_VERSION=3.12.7`, `APP_ENV=production`, `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`,
+  `SUPABASE_JWT_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ORIGINS=https://your-vercel-app.vercel.app`,
+  `APP_URL`, `PUBLIC_PORTFOLIO_URL`, `API_URL` (the last three = your deployed URLs).
+- After saving env vars, **Manual Deploy → Clear build cache & deploy**.
 
 ### Frontend → Vercel
 - Import the repo, root dir `folio-frontend`.
@@ -104,9 +115,46 @@ Open http://localhost:3000 → Register → check email → confirm → land on 
 ---
 
 ## Notes / gotchas
+- **Render Python version (REQUIRED — do this or the build fails).** Render is defaulting to
+  Python **3.14**, where `pydantic-core` has no prebuilt wheel, so it tries to compile Rust on a
+  read-only filesystem and dies. Pin it to **3.12.7**. The surest way (works no matter how the
+  service was created) is the dashboard env var:
+    1. Render → your `folio-api` service → **Environment** → **Add Environment Variable**
+    2. Key `PYTHON_VERSION`, Value `3.12.7` → **Save changes**
+    3. **Manual Deploy → Clear build cache & deploy**
+  The build log should then show `python3.12`, and `pydantic-core` installs from a wheel (no Rust).
+  This repo also ships `.python-version` (`3.12.7`), `runtime.txt`, and `PYTHON_VERSION` in
+  `render.yaml`, but a **manually-created** service ignores `render.yaml`, and `.python-version`
+  is only read when it sits at the service's root directory — so set the env var to be safe.
 - **pgbouncer transaction pooler**: the engine already sets `NullPool` + disables the asyncpg
   statement cache + uses unique prepared-statement names. Use the **pooler** string (6543), not the
   direct 5432 one, on Render.
 - **Backend bypasses RLS** (it connects with the pooler role), so ownership is enforced in the
   service layer. RLS protects any direct `@supabase/supabase-js` table access from the browser.
+- **Auth tokens (HS256 or asymmetric).** The backend verifies Supabase access tokens with
+  either the legacy HS256 secret (`SUPABASE_JWT_SECRET`) or the project's JWKS
+  (asymmetric ES256/RS256, used by the new `sb_publishable_...` key system) — whichever the
+  token uses. For HS256, set `SUPABASE_JWT_SECRET`. For asymmetric, just make sure
+  `SUPABASE_URL` is correct (JWKS is fetched from it). A wrong/empty value shows up as
+  `401 Invalid token` on `/me`.
 - If email confirmation links point at the wrong host, fix Supabase Auth URL Configuration.
+
+## Repo layout / Render Root Directory (IMPORTANT)
+`requirements.txt` and the `app/` folder must sit at the SAME level, and Render's
+**Root Directory** must point at that level. Two valid setups:
+- Repo has a `folio-backend/` subfolder (app/, requirements.txt inside) → set Render
+  **Settings → Root Directory = `folio-backend`**.
+- Repo root directly contains `app/`, `requirements.txt`, `start.py` → leave Root Directory blank.
+Symptom of a mismatch: build succeeds (`pip install` finds requirements.txt) but the app
+crashes at start with `ModuleNotFoundError: No module named 'app'` (uvicorn's CWD has no `app/`).
+
+## Troubleshooting the exact errors
+- **`RuntimeError: DATABASE_URL is not set` / "No open ports detected"** → the Render env vars
+  aren't set and/or the Start Command is wrong. Fix both as in "Backend → Render" above. The app
+  now boots even without `DATABASE_URL` so `/api/v1/health` responds and the port opens; check
+  `/api/v1/health/db` — it returns `503 db_unavailable` until `DATABASE_URL` is set correctly.
+- **Vercel still installs `next@15.1.3` ("Detected Next.js version: 15.1.3")** → your repo's
+  `package.json` still pins the old version, or a committed `package-lock.json` locks it. In
+  `folio-frontend`: make sure `package.json` has `"next": "^15.5.9"`, then
+  `rm -f package-lock.json && rm -rf node_modules && npm install` to regenerate the lockfile at the
+  patched version, commit **both** files, and push. Vercel blocks the vulnerable 15.1.3 (CVE-2025-66478).

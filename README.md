@@ -27,4 +27,8 @@ Open http://localhost:8000/docs
 
 Auth = send `Authorization: Bearer <supabase access token>`.
 
+## Deploy (Render) — the two things people miss
+- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`  (or `python start.py`). Never `--reload`, never a hardcoded port — Render needs `0.0.0.0:$PORT`.
+- **Env vars:** set every var from `.env.example` in the Render dashboard (including `PYTHON_VERSION=3.12.7` and `DATABASE_URL`). Missing `DATABASE_URL` crashes boot.
+
 Full setup (Supabase project, SQL migrations, env for both apps): see **SETUP.md**.
