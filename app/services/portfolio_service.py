@@ -67,6 +67,12 @@ async def update_profile_section(
 
 
 async def update_status(db: AsyncSession, portfolio: Portfolio, status: str) -> Portfolio:
+    if portfolio.status in ("suspended", "archived"):
+        raise AppError(
+            "This portfolio has been restricted by an administrator.",
+            code="restricted",
+            status_code=403,
+        )
     if status not in _VALID_STATUSES:
         raise AppError("Invalid status", code="invalid_status", status_code=422)
     if status == "published" and not portfolio.username:
