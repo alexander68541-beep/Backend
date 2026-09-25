@@ -1,11 +1,21 @@
-"""Production entrypoint. Binds 0.0.0.0 on the platform-provided $PORT.
+"""Resilient production entrypoint.
 
-Use this as the Render Start Command:  python start.py
-(equivalent to: uvicorn app.main:app --host 0.0.0.0 --port $PORT)
+Works no matter the current working directory: it puts its own folder (which also
+contains `app/`) on sys.path and chdirs there, so `app.main:app` always imports.
+
+Render Start Command options (any one):
+  python start.py                       (if this file sits at the service root)
+  python folio-backend/start.py         (if the repo nests everything under folio-backend/)
 """
 import os
+import sys
 
-import uvicorn
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+os.chdir(HERE)
+
+import uvicorn  # noqa: E402
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8000"))

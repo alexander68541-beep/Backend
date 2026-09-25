@@ -29,6 +29,7 @@ router = APIRouter(prefix="/public", tags=["public"])
 class PublicPortfolioOut(BaseModel):
     username: str | None = None
     template: str = "minimal"
+    accent: str = "#7c6cff"
     profile: PortfolioProfileOut | None = None
     projects: list[ProjectOut] = []
     skills: list[SkillOut] = []
@@ -51,6 +52,7 @@ async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)
     return PublicPortfolioOut(
         username=pf.username,
         template=pf.template,
+        accent=pf.accent,
         profile=PortfolioProfileOut.model_validate(data["profile"]) if data["profile"] else None,
         projects=[ProjectOut.model_validate(x) for x in data["projects"]],
         skills=[SkillOut.model_validate(x) for x in data["skills"]],

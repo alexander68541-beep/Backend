@@ -87,3 +87,10 @@ async def update_template(db: AsyncSession, portfolio: Portfolio, template: str)
     await db.commit()
     await db.refresh(portfolio)
     return portfolio
+
+
+async def update_accent(db: AsyncSession, portfolio: Portfolio, accent: str) -> Portfolio:
+    portfolio.accent = accent
+    await db.commit()
+    await db.refresh(portfolio)
+    return portfolio

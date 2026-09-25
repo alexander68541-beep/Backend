@@ -30,6 +30,7 @@ class Portfolio(Base, TimestampMixin):
     )
     is_primary: Mapped[bool] = mapped_column(nullable=False, server_default=text("true"))
     template: Mapped[str] = mapped_column(String(40), nullable=False, server_default=text("'minimal'"))
+    accent: Mapped[str] = mapped_column(String(9), nullable=False, server_default=text("'#7c6cff'"))
 
     username_changed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

@@ -46,6 +46,7 @@ class PortfolioOut(BaseModel):
     username: str | None = None
     status: str
     template: str = "minimal"
+    accent: str = "#7c6cff"
     is_primary: bool
     username_change_count: int
     username_changed_at: datetime | None = None
@@ -62,3 +63,7 @@ class StatusUpdateIn(BaseModel):
 
 class TemplateUpdateIn(BaseModel):
     template: str = Field(min_length=1, max_length=40)
+
+
+class AccentUpdateIn(BaseModel):
+    accent: str = Field(min_length=4, max_length=9, pattern=r"^#[0-9a-fA-F]{6}$")

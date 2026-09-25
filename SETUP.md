@@ -148,6 +148,15 @@ Open http://localhost:3000 → Register → check email → confirm → land on 
 Symptom of a mismatch: build succeeds (`pip install` finds requirements.txt) but the app
 crashes at start with `ModuleNotFoundError: No module named 'app'` (uvicorn's CWD has no `app/`).
 
+## Media uploads (Cloudinary — Phase 4)
+Direct browser->Cloudinary uploads with a server-side signature (API secret stays on the backend).
+1. Create a free Cloudinary account -> Dashboard shows **Cloud name**, **API Key**, **API Secret**.
+2. Add these backend env vars (Render): `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
+   `CLOUDINARY_API_SECRET`, and optionally `CLOUDINARY_UPLOAD_FOLDER` (default `folio`).
+3. Redeploy. In the dashboard, image fields (avatar, project cover, gallery, testimonial photo)
+   now show an **Upload** button. Until configured, you can still paste image URLs.
+No frontend key needed — the browser fetches a one-time signature from `/api/v1/media/sign`.
+
 ## Troubleshooting the exact errors
 - **`RuntimeError: DATABASE_URL is not set` / "No open ports detected"** → the Render env vars
   aren't set and/or the Start Command is wrong. Fix both as in "Backend → Render" above. The app

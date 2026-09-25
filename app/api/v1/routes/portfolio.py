@@ -9,6 +9,7 @@ from app.schemas.portfolio import (
     PortfolioOut,
     PortfolioProfileUpdate,
     StatusUpdateIn,
+    AccentUpdateIn,
     TemplateUpdateIn,
     UsernameSetIn,
 )
@@ -72,4 +73,15 @@ async def update_template(
 ) -> PortfolioOut:
     portfolio = await portfolio_service.ensure_primary_portfolio(db, user.id)
     portfolio = await portfolio_service.update_template(db, portfolio, payload.template)
+    return PortfolioOut.model_validate(portfolio)
+
+
+@router.patch("/accent", response_model=PortfolioOut)
+async def update_accent(
+    payload: AccentUpdateIn,
+    user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> PortfolioOut:
+    portfolio = await portfolio_service.ensure_primary_portfolio(db, user.id)
+    portfolio = await portfolio_service.update_accent(db, portfolio, payload.accent)
     return PortfolioOut.model_validate(portfolio)
