@@ -10,7 +10,8 @@ from app.models import Portfolio, PortfolioProfile
 from app.schemas.portfolio import PortfolioProfileUpdate
 
 _VALID_STATUSES = {"draft", "published", "unpublished"}
-ALLOWED_TEMPLATES = {"minimal", "bold"}
+ALLOWED_TEMPLATES = {"minimal", "bold", "editorial", "studio"}
+PRO_TEMPLATES = {"studio"}  # admin/premium only
 
 
 async def get_primary_portfolio(db: AsyncSession, user_id: str) -> Portfolio | None:

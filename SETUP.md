@@ -157,6 +157,14 @@ Direct browser->Cloudinary uploads with a server-side signature (API secret stay
    now show an **Upload** button. Until configured, you can still paste image URLs.
 No frontend key needed — the browser fetches a one-time signature from `/api/v1/media/sign`.
 
+## Admin access (Phase 8)
+Roles live in the `profiles.role` column. To make a user an admin, run in Supabase SQL:
+```sql
+update public.profiles set role = 'admin' where email = 'you@example.com';
+```
+Admins see an **Admin** item in the dashboard sidebar (platform stats + all portfolios) and can
+use PRO templates (e.g. **Studio**). Regular users see the free templates only.
+
 ## Troubleshooting the exact errors
 - **`RuntimeError: DATABASE_URL is not set` / "No open ports detected"** → the Render env vars
   aren't set and/or the Start Command is wrong. Fix both as in "Backend → Render" above. The app

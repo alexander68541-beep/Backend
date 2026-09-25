@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.core.security import CurrentUser, get_current_user
+from app.api.deps import get_current_account
+from app.models import Profile
 from app.db.session import get_db
 from app.schemas.portfolio import (
     PortfolioOut,
@@ -68,10 +70,13 @@ async def update_status(
 @router.patch("/template", response_model=PortfolioOut)
 async def update_template(
     payload: TemplateUpdateIn,
-    user: CurrentUser = Depends(get_current_user),
+    account: Profile = Depends(get_current_account),
     db: AsyncSession = Depends(get_db),
 ) -> PortfolioOut:
-    portfolio = await portfolio_service.ensure_primary_portfolio(db, user.id)
+    if payload.template in portfolio_service.PRO_TEMPLATES and account.role != "admin":
+        from app.core.errors import AppError
+        raise AppError("This template is available to admins only.", code="template_locked", status_code=403)
+    portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
     portfolio = await portfolio_service.update_template(db, portfolio, payload.template)
     return PortfolioOut.model_validate(portfolio)
 
