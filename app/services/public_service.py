@@ -9,6 +9,7 @@ from app.models import (
     Certification,
     Education,
     Experience,
+    GalleryItem,
     Portfolio,
     PortfolioProfile,
     Project,
@@ -17,23 +18,12 @@ from app.models import (
     Skill,
     SocialLink,
     Testimonial,
-    GalleryItem,
     Video,
 )
 from app.utils.username import normalize_username
 
 
-async def get_published(db: AsyncSession, username: str) -> dict:
-    name = normalize_username(username)
-    stmt = select(Portfolio).where(
-        func.lower(Portfolio.username) == name,
-        Portfolio.status == "published",
-        Portfolio.deleted_at.is_(None),
-    )
-    portfolio = (await db.execute(stmt)).scalar_one_or_none()
-    if portfolio is None:
-        raise AppError("Portfolio not found", code="not_found", status_code=404)
-
+async def _aggregate(db: AsyncSession, portfolio: Portfolio) -> dict:
     profile = await db.get(PortfolioProfile, portfolio.id)
 
     async def _items(model):
@@ -60,3 +50,21 @@ async def get_published(db: AsyncSession, username: str) -> dict:
         "gallery": await _items(GalleryItem),
         "videos": await _items(Video),
     }
+
+
+async def get_published(db: AsyncSession, username: str) -> dict:
+    name = normalize_username(username)
+    stmt = select(Portfolio).where(
+        func.lower(Portfolio.username) == name,
+        Portfolio.status == "published",
+        Portfolio.deleted_at.is_(None),
+    )
+    portfolio = (await db.execute(stmt)).scalar_one_or_none()
+    if portfolio is None:
+        raise AppError("Portfolio not found", code="not_found", status_code=404)
+    return await _aggregate(db, portfolio)
+
+
+async def get_owner_preview(db: AsyncSession, portfolio: Portfolio) -> dict:
+    """Owner's own portfolio, any status — for the dashboard live preview."""
+    return await _aggregate(db, portfolio)

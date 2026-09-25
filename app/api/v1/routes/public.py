@@ -20,7 +20,8 @@ from app.schemas.portfolio_data import (
     GalleryOut,
     VideoOut,
 )
-from app.services import public_service
+from app.core.security import CurrentUser, get_current_user
+from app.services import portfolio_service, public_service
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/public", tags=["public"])
@@ -45,9 +46,7 @@ class PublicPortfolioOut(BaseModel):
     videos: list[VideoOut] = []
 
 
-@router.get("/{username}", response_model=PublicPortfolioOut)
-async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)):
-    data = await public_service.get_published(db, username)
+def _serialize(data) -> "PublicPortfolioOut":
     pf = data["portfolio"]
     return PublicPortfolioOut(
         username=pf.username,
@@ -67,3 +66,19 @@ async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)
         gallery=[GalleryOut.model_validate(x) for x in data["gallery"]],
         videos=[VideoOut.model_validate(x) for x in data["videos"]],
     )
+
+
+@router.get("/preview", response_model=PublicPortfolioOut)
+async def preview_portfolio(
+    user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    portfolio = await portfolio_service.ensure_primary_portfolio(db, user.id)
+    data = await public_service.get_owner_preview(db, portfolio)
+    return _serialize(data)
+
+
+@router.get("/{username}", response_model=PublicPortfolioOut)
+async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)):
+    data = await public_service.get_published(db, username)
+    return _serialize(data)
