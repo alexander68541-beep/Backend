@@ -60,6 +60,6 @@ register_error_handlers(app)
 app.include_router(api_router, prefix="/api/v1")
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root() -> dict:
     return {"service": "folio-api", "version": "0.1.0", "status": "ok"}

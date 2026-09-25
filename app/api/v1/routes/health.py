@@ -19,7 +19,7 @@ _EXPECTED_TABLES = {
 }
 
 
-@router.get("/health")
+@router.api_route("/health", methods=["GET", "HEAD"])
 async def health() -> dict:
     # No DB touch — always succeeds so the platform can detect the open port.
     return {"status": "ok"}
