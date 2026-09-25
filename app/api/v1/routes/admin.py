@@ -145,3 +145,72 @@ async def remove_reserved(name: str, db: AsyncSession = Depends(get_db)):
         await db.delete(r)
         await db.commit()
     return {"ok": True}
+
+
+from app.models import PlatformSettings, PaymentRequest
+from app.schemas.billing import SettingsOut, SettingsUpdate, AdminPaymentOut
+
+
+@router.get("/settings", response_model=SettingsOut)
+async def get_settings(db: AsyncSession = Depends(get_db)):
+    s = await db.get(PlatformSettings, 1)
+    if s is None:
+        s = PlatformSettings(id=1)
+        db.add(s)
+        await db.commit()
+        await db.refresh(s)
+    return SettingsOut.model_validate(s)
+
+
+@router.patch("/settings", response_model=SettingsOut)
+async def update_settings(payload: SettingsUpdate, db: AsyncSession = Depends(get_db)):
+    s = await db.get(PlatformSettings, 1)
+    if s is None:
+        s = PlatformSettings(id=1)
+        db.add(s)
+    for k, v in payload.model_dump(exclude_unset=True).items():
+        setattr(s, k, v)
+    await db.commit()
+    await db.refresh(s)
+    return SettingsOut.model_validate(s)
+
+
+@router.get("/payments", response_model=list[AdminPaymentOut])
+async def list_payments(db: AsyncSession = Depends(get_db)):
+    rows = (
+        await db.execute(
+            select(PaymentRequest, Profile.email)
+            .join(Profile, Profile.id == PaymentRequest.user_id)
+            .order_by(PaymentRequest.created_at.desc())
+            .limit(300)
+        )
+    ).all()
+    out = []
+    for pr, email in rows:
+        item = AdminPaymentOut.model_validate(pr)
+        item.email = email
+        out.append(item)
+    return out
+
+
+@router.post("/payments/{payment_id}/approve")
+async def approve_payment(payment_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    pr = await db.get(PaymentRequest, payment_id)
+    if pr is None:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    pr.status = "approved"
+    user = await db.get(Profile, pr.user_id)
+    if user is not None:
+        user.plan = "pro"
+    await db.commit()
+    return {"ok": True}
+
+
+@router.post("/payments/{payment_id}/reject")
+async def reject_payment(payment_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    pr = await db.get(PaymentRequest, payment_id)
+    if pr is None:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    pr.status = "rejected"
+    await db.commit()
+    return {"ok": True}

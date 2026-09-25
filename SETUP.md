@@ -165,6 +165,12 @@ update public.profiles set role = 'admin' where email = 'you@example.com';
 Admins see an **Admin** item in the dashboard sidebar (platform stats + all portfolios) and can
 use PRO templates (e.g. **Studio**). Regular users see the free templates only.
 
+## Billing / plans (Phase 10)
+Run migration `0010_billing.sql`. Admins set price, pro features and payment details
+(USDT BEP-20 address, Nagad, bKash) in **Dashboard -> Admin -> Billing settings**. Users
+pay manually, submit TxID + screenshot on **Dashboard -> Upgrade**, and an admin approves
+the payment (which flips the user's plan to `pro`, unlocking PRO templates).
+
 ## Troubleshooting the exact errors
 - **`RuntimeError: DATABASE_URL is not set` / "No open ports detected"** → the Render env vars
   aren't set and/or the Start Command is wrong. Fix both as in "Backend → Render" above. The app

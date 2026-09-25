@@ -45,3 +45,8 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Link chips with auto platform icons (GitHub/LinkedIn/website/…), clearly clickable
 - [x] Click-to-zoom lightbox on images; gallery natural aspect (no crop)
 - [x] Templates render tagline, pronouns, and every provided field
+
+## Phase 10 — Plans + manual payments  🟡
+- [x] free/pro plan; PRO templates unlock for pro (or admin)
+- [x] admin-controlled settings: price, currency, pro features, BEP-20 / Nagad / bKash, note
+- [x] user Upgrade page: methods, submit TxID + screenshot; admin approve/reject -> upgrades user

@@ -73,7 +73,7 @@ async def update_template(
     account: Profile = Depends(get_current_account),
     db: AsyncSession = Depends(get_db),
 ) -> PortfolioOut:
-    if payload.template in portfolio_service.PRO_TEMPLATES and account.role != "admin":
+    if payload.template in portfolio_service.PRO_TEMPLATES and account.role != "admin" and account.plan != "pro":
         from app.core.errors import AppError
         raise AppError("This template is available to admins only.", code="template_locked", status_code=403)
     portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))

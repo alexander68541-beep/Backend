@@ -18,3 +18,4 @@ class Profile(Base, TimestampMixin):
     role: Mapped[str] = mapped_column(
         String(32), nullable=False, server_default=text("'user'")
     )
+    plan: Mapped[str] = mapped_column(String(16), nullable=False, server_default=text("'free'"))

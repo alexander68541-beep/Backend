@@ -10,3 +10,4 @@ class AccountOut(BaseModel):
     email: EmailStr | None = None
     full_name: str | None = None
     role: str
+    plan: str = "free"
