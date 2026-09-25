@@ -17,6 +17,8 @@ from app.schemas.portfolio_data import (
     SkillOut,
     SocialLinkOut,
     TestimonialOut,
+    GalleryOut,
+    VideoOut,
 )
 from app.services import public_service
 from pydantic import BaseModel
@@ -38,6 +40,8 @@ class PublicPortfolioOut(BaseModel):
     achievements: list[AchievementOut] = []
     testimonials: list[TestimonialOut] = []
     publications: list[PublicationOut] = []
+    gallery: list[GalleryOut] = []
+    videos: list[VideoOut] = []
 
 
 @router.get("/{username}", response_model=PublicPortfolioOut)
@@ -58,4 +62,6 @@ async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)
         achievements=[AchievementOut.model_validate(x) for x in data["achievements"]],
         testimonials=[TestimonialOut.model_validate(x) for x in data["testimonials"]],
         publications=[PublicationOut.model_validate(x) for x in data["publications"]],
+        gallery=[GalleryOut.model_validate(x) for x in data["gallery"]],
+        videos=[VideoOut.model_validate(x) for x in data["videos"]],
     )

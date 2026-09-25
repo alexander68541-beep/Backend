@@ -17,6 +17,8 @@ from app.models import (
     Skill,
     SocialLink,
     Testimonial,
+    GalleryItem,
+    Video,
 )
 from app.utils.username import normalize_username
 
@@ -55,4 +57,6 @@ async def get_published(db: AsyncSession, username: str) -> dict:
         "achievements": await _items(Achievement),
         "testimonials": await _items(Testimonial),
         "publications": await _items(Publication),
+        "gallery": await _items(GalleryItem),
+        "videos": await _items(Video),
     }

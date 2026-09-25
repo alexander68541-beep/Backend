@@ -111,3 +111,15 @@ class Publication(Base, _PortfolioChild):
     date: Mapped[str | None] = mapped_column(Text)
     url: Mapped[str | None] = mapped_column(Text)
     description: Mapped[str | None] = mapped_column(Text)
+
+
+class GalleryItem(Base, _PortfolioChild):
+    __tablename__ = "portfolio_gallery"
+    image_url: Mapped[str] = mapped_column(Text, nullable=False)
+    caption: Mapped[str | None] = mapped_column(Text)
+
+
+class Video(Base, _PortfolioChild):
+    __tablename__ = "portfolio_videos"
+    title: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str] = mapped_column(Text, nullable=False)

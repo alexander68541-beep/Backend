@@ -12,6 +12,8 @@ from app.models.portfolio_data import (
     Achievement,
     Testimonial,
     Publication,
+    GalleryItem,
+    Video,
 )
 
 __all__ = [
@@ -31,4 +33,6 @@ __all__ = [
     "Achievement",
     "Testimonial",
     "Publication",
+    "GalleryItem",
+    "Video",
 ]

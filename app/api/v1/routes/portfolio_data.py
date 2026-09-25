@@ -7,6 +7,8 @@ from app.core.security import CurrentUser, get_current_user
 from app.db.session import get_db
 from app.models import (
     Achievement,
+    GalleryItem,
+    Video,
     Certification,
     Education,
     Experience,
@@ -19,6 +21,8 @@ from app.models import (
 )
 from app.schemas.portfolio_data import (
     AchievementIn, AchievementOut, AchievementUpdate,
+    GalleryIn, GalleryOut, GalleryUpdate,
+    VideoIn, VideoOut, VideoUpdate,
     CertificationIn, CertificationOut, CertificationUpdate,
     PublicationIn, PublicationOut, PublicationUpdate,
     ServiceIn, ServiceOut, ServiceUpdate,
@@ -141,6 +145,15 @@ publications_router = make_crud_router(
     create_schema=PublicationIn, update_schema=PublicationUpdate, out_schema=PublicationOut,
 )
 
+gallery_router = make_crud_router(
+    prefix="/portfolio/gallery", tag="gallery", model=GalleryItem,
+    create_schema=GalleryIn, update_schema=GalleryUpdate, out_schema=GalleryOut,
+)
+videos_router = make_crud_router(
+    prefix="/portfolio/videos", tag="videos", model=Video,
+    create_schema=VideoIn, update_schema=VideoUpdate, out_schema=VideoOut,
+)
+
 all_routers = [
     projects_router,
     skills_router,
@@ -152,4 +165,6 @@ all_routers = [
     achievements_router,
     testimonials_router,
     publications_router,
+    gallery_router,
+    videos_router,
 ]

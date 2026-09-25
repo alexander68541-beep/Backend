@@ -255,3 +255,35 @@ class PublicationOut(_Out):
     date: str | None = None
     url: str | None = None
     description: str | None = None
+
+
+# ---------- Gallery ----------
+class GalleryIn(BaseModel):
+    image_url: str = Field(min_length=1, max_length=2048)
+    caption: str | None = Field(default=None, max_length=300)
+
+
+class GalleryUpdate(BaseModel):
+    image_url: str | None = Field(default=None, min_length=1, max_length=2048)
+    caption: str | None = Field(default=None, max_length=300)
+
+
+class GalleryOut(_Out):
+    image_url: str
+    caption: str | None = None
+
+
+# ---------- Videos ----------
+class VideoIn(BaseModel):
+    title: str | None = Field(default=None, max_length=200)
+    url: str = Field(min_length=1, max_length=2048)
+
+
+class VideoUpdate(BaseModel):
+    title: str | None = Field(default=None, max_length=200)
+    url: str | None = Field(default=None, min_length=1, max_length=2048)
+
+
+class VideoOut(_Out):
+    title: str | None = None
+    url: str
