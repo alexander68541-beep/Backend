@@ -240,11 +240,12 @@ async def admin_list_templates(db: AsyncSession = Depends(get_db)):
 
 @router.post("/templates", response_model=CustomTemplateOut, status_code=201)
 async def admin_create_template(payload: CustomTemplateIn, db: AsyncSession = Depends(get_db)):
-    if payload.base not in _TEMPLATE_BASES:
-        raise HTTPException(status_code=422, detail="Invalid base layout")
     if payload.plan not in ("free", "pro"):
         raise HTTPException(status_code=422, detail="Invalid plan")
-    t = CustomTemplate(**payload.model_dump())
+    data = payload.model_dump()
+    if not data.get("base"):
+        data["base"] = data["key"]
+    t = CustomTemplate(**data)
     db.add(t)
     await db.commit()
     await db.refresh(t)
@@ -257,8 +258,6 @@ async def admin_update_template(template_id: uuid.UUID, payload: CustomTemplateU
     if t is None:
         raise HTTPException(status_code=404, detail="Not found")
     data = payload.model_dump(exclude_unset=True)
-    if "base" in data and data["base"] not in _TEMPLATE_BASES:
-        raise HTTPException(status_code=422, detail="Invalid base layout")
     for k, v in data.items():
         setattr(t, k, v)
     await db.commit()

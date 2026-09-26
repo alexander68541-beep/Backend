@@ -88,8 +88,7 @@ async def update_status(db: AsyncSession, portfolio: Portfolio, status: str) -> 
 
 
 async def update_template(db: AsyncSession, portfolio: Portfolio, template: str) -> Portfolio:
-    if template not in ALLOWED_TEMPLATES:
-        raise AppError("Unknown template", code="invalid_template", status_code=422)
+    # Validation (built-in vs active listing, pro gating) is handled in the route.
     portfolio.template = template
     await db.commit()
     await db.refresh(portfolio)

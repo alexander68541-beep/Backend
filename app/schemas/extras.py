@@ -9,6 +9,7 @@ _BASES = {"minimal", "bold", "editorial", "studio"}
 class CustomTemplateOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
+    key: str | None = None
     name: str
     category: str
     base: str
@@ -18,6 +19,7 @@ class CustomTemplateOut(BaseModel):
 
 
 class CustomTemplateIn(BaseModel):
+    key: str = Field(min_length=1, max_length=60)
     name: str = Field(min_length=1, max_length=80)
     category: str = Field(default="Custom", max_length=60)
     base: str = "minimal"
@@ -27,6 +29,7 @@ class CustomTemplateIn(BaseModel):
 
 
 class CustomTemplateUpdate(BaseModel):
+    key: str | None = Field(default=None, max_length=60)
     name: str | None = Field(default=None, max_length=80)
     category: str | None = Field(default=None, max_length=60)
     base: str | None = None

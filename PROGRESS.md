@@ -55,3 +55,8 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Admin builds custom templates (base + accent + category + plan) — appear for users by category
 - [x] Users apply custom templates; PRO ones gated by plan
 - [x] Messaging: user↔admin thread (custom-template requests etc.), admin inbox + reply, realtime polling
+
+## Phase 11.1 — Code-defined templates
+- [x] Templates are React components in src/templates + a registry; admin lists them
+- [x] Admin listing: coded key + name + category + plan + active/inactive; DB-driven gating
+- [x] See folio-frontend/src/templates/README.md for how to add a coded template

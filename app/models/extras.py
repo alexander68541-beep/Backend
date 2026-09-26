@@ -11,6 +11,7 @@ from app.models.base import Base
 class CustomTemplate(Base):
     __tablename__ = "custom_templates"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    key: Mapped[str | None] = mapped_column(Text)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     category: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'Custom'"))
     base: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'minimal'"))

@@ -75,14 +75,26 @@ async def update_template(
     account: Profile = Depends(get_current_account),
     db: AsyncSession = Depends(get_db),
 ) -> PortfolioOut:
-    if payload.template in portfolio_service.PRO_TEMPLATES:
-        s = await db.get(PlatformSettings, 1)
-        pro_features = list(s.pro_features) if s and s.pro_features else []
-        if not has_feature("premium_templates", pro_features, account.role, account.plan):
-            from app.core.errors import AppError
-            raise AppError("This is a premium template. Upgrade to Pro to use it.", code="template_locked", status_code=403)
+    from sqlalchemy import select as _select
+    from app.core.errors import AppError
+
+    key = payload.template
+    row = (
+        await db.execute(
+            _select(CustomTemplate).where(CustomTemplate.key == key, CustomTemplate.is_published == True).limit(1)  # noqa: E712
+        )
+    ).scalar_one_or_none()
+
+    # Must be a known built-in or an active listed template.
+    if row is None and key not in portfolio_service.ALLOWED_TEMPLATES:
+        raise AppError("Template not found or inactive.", code="not_found", status_code=404)
+
+    pro_needed = (row is not None and row.plan == "pro") or (key in portfolio_service.PRO_TEMPLATES)
+    if pro_needed and not is_pro_account(account.role, account.plan):
+        raise AppError("This is a Pro template. Upgrade to use it.", code="template_locked", status_code=403)
+
     portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
-    portfolio = await portfolio_service.update_template(db, portfolio, payload.template)
+    portfolio = await portfolio_service.update_template(db, portfolio, key)
     return PortfolioOut.model_validate(portfolio)
 
 
