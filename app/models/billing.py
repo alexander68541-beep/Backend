@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Integer, String, Text, text, ForeignKey, DateTime
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -18,6 +18,11 @@ class PlatformSettings(Base):
     nagad_number: Mapped[str | None] = mapped_column(Text)
     bkash_number: Mapped[str | None] = mapped_column(Text)
     payment_note: Mapped[str | None] = mapped_column(Text)
+    payment_methods: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
+    cloudinary_cloud_name: Mapped[str | None] = mapped_column(Text)
+    cloudinary_api_key: Mapped[str | None] = mapped_column(Text)
+    cloudinary_api_secret: Mapped[str | None] = mapped_column(Text)
+    cloudinary_folder: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
 
 

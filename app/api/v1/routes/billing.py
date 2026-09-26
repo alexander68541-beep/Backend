@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_account
 from app.db.session import get_db
 from app.models import PaymentRequest, PlatformSettings, Profile
-from app.schemas.billing import BillingInfoOut, PaymentOut, PaymentSubmitIn
+from app.core.features import FEATURE_CATALOG, has_feature, is_pro_account
+from app.schemas.billing import BillingInfoOut, FeatureOut, PaymentMethod, PaymentOut, PaymentSubmitIn
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
@@ -16,15 +17,24 @@ async def billing_info(
     db: AsyncSession = Depends(get_db),
 ):
     s = await db.get(PlatformSettings, 1)
+    pro_features = list(s.pro_features) if s and s.pro_features else []
+    methods = [PaymentMethod(**m) for m in (s.payment_methods or [])] if s else []
+    features = [
+        FeatureOut(
+            key=f["key"], label=f["label"], desc=f["desc"],
+            pro=(f["key"] in pro_features),
+            has=has_feature(f["key"], pro_features, account.role, account.plan),
+        )
+        for f in FEATURE_CATALOG
+    ]
     return BillingInfoOut(
         plan=account.plan,
+        is_pro=is_pro_account(account.role, account.plan),
         pro_price=(s.pro_price if s else None),
         currency=(s.currency if s else None),
-        pro_features=(list(s.pro_features) if s and s.pro_features else []),
-        bep20_address=(s.bep20_address if s else None),
-        nagad_number=(s.nagad_number if s else None),
-        bkash_number=(s.bkash_number if s else None),
         payment_note=(s.payment_note if s else None),
+        payment_methods=methods,
+        features=features,
     )
 
 

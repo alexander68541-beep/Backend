@@ -5,7 +5,8 @@ from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.core.security import CurrentUser, get_current_user
 from app.api.deps import get_current_account
-from app.models import Profile
+from app.core.features import has_feature
+from app.models import PlatformSettings, Profile
 from app.db.session import get_db
 from app.schemas.portfolio import (
     PortfolioOut,
@@ -73,9 +74,12 @@ async def update_template(
     account: Profile = Depends(get_current_account),
     db: AsyncSession = Depends(get_db),
 ) -> PortfolioOut:
-    if payload.template in portfolio_service.PRO_TEMPLATES and account.role != "admin" and account.plan != "pro":
-        from app.core.errors import AppError
-        raise AppError("This template is available to admins only.", code="template_locked", status_code=403)
+    if payload.template in portfolio_service.PRO_TEMPLATES:
+        s = await db.get(PlatformSettings, 1)
+        pro_features = list(s.pro_features) if s and s.pro_features else []
+        if not has_feature("premium_templates", pro_features, account.role, account.plan):
+            from app.core.errors import AppError
+            raise AppError("This is a premium template. Upgrade to Pro to use it.", code="template_locked", status_code=403)
     portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
     portfolio = await portfolio_service.update_template(db, portfolio, payload.template)
     return PortfolioOut.model_validate(portfolio)

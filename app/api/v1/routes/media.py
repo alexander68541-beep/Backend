@@ -1,11 +1,14 @@
 import hashlib
 import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.security import CurrentUser, get_current_user
+from app.db.session import get_db
+from app.models import PlatformSettings
 
 router = APIRouter(prefix="/media", tags=["media"])
 
@@ -23,41 +26,31 @@ class SignOut(BaseModel):
     folder: str
 
 
-def _cloudinary_ready() -> bool:
-    return bool(
-        settings.CLOUDINARY_CLOUD_NAME
-        and settings.CLOUDINARY_API_KEY
-        and settings.CLOUDINARY_API_SECRET
-    )
+async def _creds(db: AsyncSession):
+    s = await db.get(PlatformSettings, 1)
+    cloud = (s.cloudinary_cloud_name if s else None) or settings.CLOUDINARY_CLOUD_NAME
+    key = (s.cloudinary_api_key if s else None) or settings.CLOUDINARY_API_KEY
+    secret = (s.cloudinary_api_secret if s else None) or settings.CLOUDINARY_API_SECRET
+    folder = (s.cloudinary_folder if s else None) or settings.CLOUDINARY_UPLOAD_FOLDER or "folio"
+    return cloud, key, secret, folder
 
 
 @router.get("/config", response_model=MediaConfigOut)
-async def media_config():
-    return MediaConfigOut(
-        enabled=_cloudinary_ready(),
-        cloud_name=settings.CLOUDINARY_CLOUD_NAME or None,
-    )
+async def media_config(db: AsyncSession = Depends(get_db)):
+    cloud, key, secret, _ = await _creds(db)
+    return MediaConfigOut(enabled=bool(cloud and key and secret), cloud_name=cloud or None)
 
 
 @router.post("/sign", response_model=SignOut)
-async def sign_upload(user: CurrentUser = Depends(get_current_user)):
-    """Return signed params for a direct browser->Cloudinary upload. The API secret
-    never leaves the server. Files are scoped to a per-user folder."""
-    from fastapi import HTTPException
-
-    if not _cloudinary_ready():
+async def sign_upload(
+    user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    cloud, key, secret, base_folder = await _creds(db)
+    if not (cloud and key and secret):
         raise HTTPException(status_code=503, detail="Media uploads are not configured.")
-
     timestamp = int(time.time())
-    folder = f"{settings.CLOUDINARY_UPLOAD_FOLDER}/{user.id}"
-    # Cloudinary signature: sha1 of sorted "key=value" of the params being signed + api_secret
+    folder = f"{base_folder}/{user.id}"
     to_sign = f"folder={folder}&timestamp={timestamp}"
-    signature = hashlib.sha1((to_sign + settings.CLOUDINARY_API_SECRET).encode()).hexdigest()
-
-    return SignOut(
-        cloud_name=settings.CLOUDINARY_CLOUD_NAME,
-        api_key=settings.CLOUDINARY_API_KEY,
-        timestamp=timestamp,
-        signature=signature,
-        folder=folder,
-    )
+    signature = hashlib.sha1((to_sign + secret).encode()).hexdigest()
+    return SignOut(cloud_name=cloud, api_key=key, timestamp=timestamp, signature=signature, folder=folder)
