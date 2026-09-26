@@ -86,6 +86,23 @@ async def preview_portfolio(
     return _serialize(data, hide_branding=hide)
 
 
+@router.get("/usernames")
+async def list_published_usernames(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import select as _select
+    rows = (
+        await db.execute(
+            _select(Portfolio.username)
+            .where(
+                Portfolio.status == "published",
+                Portfolio.deleted_at.is_(None),
+                Portfolio.username.isnot(None),
+            )
+            .limit(5000)
+        )
+    ).all()
+    return [r[0] for r in rows]
+
+
 @router.get("/{username}", response_model=PublicPortfolioOut)
 async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)):
     data = await public_service.get_published(db, username)

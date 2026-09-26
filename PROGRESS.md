@@ -65,3 +65,8 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Live template preview with demo data (/t/{key}); card live thumbnails + optional admin preview image
 - [x] Settings dynamic: display name, change password, delete account (cascades)
 - [x] Admin template Active/Inactive toggle clarified (status badge + Activate/Deactivate)
+
+## Phase 12 — Link fix + SEO  🟡
+- [x] External links without a scheme are auto-prefixed https:// (no more broken relative URLs)
+- [x] Public pages: Open Graph + Twitter meta + canonical (per portfolio, avatar as image)
+- [x] sitemap.xml (published portfolios) + robots.txt; SSR pages for Google
