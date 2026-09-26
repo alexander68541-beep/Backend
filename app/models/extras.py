@@ -16,6 +16,7 @@ class CustomTemplate(Base):
     category: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'Custom'"))
     base: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'minimal'"))
     accent: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'#7c6cff'"))
+    preview_url: Mapped[str | None] = mapped_column(Text)
     plan: Mapped[str] = mapped_column(String(16), nullable=False, server_default=text("'free'"))
     is_published: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     position: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))

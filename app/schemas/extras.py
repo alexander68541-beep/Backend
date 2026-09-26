@@ -16,6 +16,7 @@ class CustomTemplateOut(BaseModel):
     accent: str
     plan: str
     is_published: bool
+    preview_url: str | None = None
 
 
 class CustomTemplateIn(BaseModel):
@@ -26,6 +27,7 @@ class CustomTemplateIn(BaseModel):
     accent: str = Field(default="#7c6cff", pattern=r"^#[0-9a-fA-F]{6}$")
     plan: str = "free"
     is_published: bool = True
+    preview_url: str | None = Field(default=None, max_length=2048)
 
 
 class CustomTemplateUpdate(BaseModel):
@@ -36,6 +38,7 @@ class CustomTemplateUpdate(BaseModel):
     accent: str | None = Field(default=None, pattern=r"^#[0-9a-fA-F]{6}$")
     plan: str | None = None
     is_published: bool | None = None
+    preview_url: str | None = Field(default=None, max_length=2048)
 
 
 class ApplyTemplateIn(BaseModel):
