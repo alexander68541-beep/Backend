@@ -75,3 +75,9 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] View analytics: per-portfolio daily views (beacon), dashboard chart (total/7d/today)
 - [x] SEO page is real: per-portfolio meta title, description, og:image (overrides defaults)
 - [x] Template thumbnails render the full desktop view (auto-fit), not a crop
+
+## Phase 14 — Contact + Notifications + Email
+- [x] Public contact form on portfolios (honeypot + rate limit); owner gets a message inbox
+- [x] In-app notifications (bell + unread count + notifications page); contact & payment events
+- [x] Transactional email via Resend (admin-configured): contact received, payment approved
+- [x] Fixed latent bug: /public/usernames & /view now import Portfolio (sitemap + analytics work)

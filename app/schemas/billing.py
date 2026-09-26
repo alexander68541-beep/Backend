@@ -61,6 +61,8 @@ class SettingsOut(BaseModel):
     cloudinary_api_key: str | None = None
     cloudinary_folder: str | None = None
     cloudinary_configured: bool = False
+    email_from: str | None = None
+    email_configured: bool = False
 
 
 class SettingsUpdate(BaseModel):
@@ -73,3 +75,5 @@ class SettingsUpdate(BaseModel):
     cloudinary_api_key: str | None = None
     cloudinary_api_secret: str | None = None
     cloudinary_folder: str | None = None
+    resend_api_key: str | None = None
+    email_from: str | None = None

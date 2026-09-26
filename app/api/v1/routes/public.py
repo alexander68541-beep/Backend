@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -23,7 +23,10 @@ from app.schemas.portfolio_data import (
 from app.core.security import CurrentUser, get_current_user
 from app.api.deps import get_current_account
 from app.core.features import has_feature
-from app.models import PlatformSettings, Profile
+from app.core.config import settings
+from app.core.rate_limit import limiter
+from app.schemas.inbox import ContactIn
+from app.models import ContactSubmission, PlatformSettings, Portfolio, Profile
 from app.services import portfolio_service, public_service
 from pydantic import BaseModel
 
@@ -135,6 +138,45 @@ async def track_view(username: str, db: AsyncSession = Depends(get_db)):
     )
     await db.execute(stmt)
     await db.commit()
+    return {"ok": True}
+
+
+@router.post("/{username}/contact")
+@limiter.limit("6/minute")
+async def contact(request: Request, username: str, payload: ContactIn, db: AsyncSession = Depends(get_db)):
+    # honeypot: if a bot filled the hidden field, silently accept without storing
+    if payload.website:
+        return {"ok": True}
+    from sqlalchemy import func as _func, select as _select
+    from app.utils.username import normalize_username
+    from app.services.email_service import notify, send_email
+
+    row = (
+        await db.execute(
+            _select(Portfolio).where(
+                _func.lower(Portfolio.username) == normalize_username(username),
+                Portfolio.status == "published",
+                Portfolio.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        return {"ok": False}
+
+    ip = request.client.host if request.client else None
+    db.add(ContactSubmission(portfolio_id=row.id, name=payload.name, email=payload.email, message=payload.message, ip=ip))
+    await notify(db, row.user_id, "contact", "New contact message",
+                 f"{payload.name or 'Someone'} sent you a message.")
+    await db.commit()
+
+    owner = await db.get(Profile, row.user_id)
+    if owner and owner.email:
+        html = (
+            "<p>You received a new message on your Folio portfolio.</p>"
+            f"<p><b>From:</b> {payload.name or ''} ({payload.email or ''})</p>"
+            f"<p>{payload.message}</p>"
+        )
+        await send_email(db, owner.email, "New message on your Folio portfolio", html)
     return {"ok": True}
 
 

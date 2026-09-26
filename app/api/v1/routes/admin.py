@@ -159,7 +159,10 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
         db.add(s)
         await db.commit()
         await db.refresh(s)
-    return SettingsOut.model_validate(s)
+    out = SettingsOut.model_validate(s)
+    out.cloudinary_configured = bool(s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret)
+    out.email_configured = bool(s.resend_api_key and s.email_from)
+    return out
 
 
 @router.patch("/settings", response_model=SettingsOut)
@@ -172,7 +175,10 @@ async def update_settings(payload: SettingsUpdate, db: AsyncSession = Depends(ge
         setattr(s, k, v)
     await db.commit()
     await db.refresh(s)
-    return SettingsOut.model_validate(s)
+    out = SettingsOut.model_validate(s)
+    out.cloudinary_configured = bool(s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret)
+    out.email_configured = bool(s.resend_api_key and s.email_from)
+    return out
 
 
 @router.get("/payments", response_model=list[AdminPaymentOut])
@@ -202,7 +208,14 @@ async def approve_payment(payment_id: uuid.UUID, db: AsyncSession = Depends(get_
     user = await db.get(Profile, pr.user_id)
     if user is not None:
         user.plan = "pro"
-    await db.commit()
+        from app.services.email_service import notify, send_email
+        await notify(db, user.id, "billing", "Payment approved", "You're now on Pro — enjoy all premium features!")
+        await db.commit()
+        if user.email:
+            await send_email(db, user.email, "Your Folio payment was approved",
+                             "<p>Your payment has been approved. Your account is now <b>Pro</b> — all premium features are unlocked.</p>")
+    else:
+        await db.commit()
     return {"ok": True}
 
 

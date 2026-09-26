@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str = ""
     CLOUDINARY_UPLOAD_FOLDER: str = "folio"
 
+    # Email (Resend, transactional) — admin can also set in platform_settings
+    RESEND_API_KEY: str = ""
+    EMAIL_FROM: str = ""
+
     # Database
     DATABASE_URL: str = ""
     DB_SSL: bool = True

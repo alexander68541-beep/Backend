@@ -23,6 +23,8 @@ class PlatformSettings(Base):
     cloudinary_api_key: Mapped[str | None] = mapped_column(Text)
     cloudinary_api_secret: Mapped[str | None] = mapped_column(Text)
     cloudinary_folder: Mapped[str | None] = mapped_column(Text)
+    resend_api_key: Mapped[str | None] = mapped_column(Text)
+    email_from: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
 
 
