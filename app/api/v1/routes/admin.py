@@ -387,10 +387,6 @@ async def resolve_report(report_id: uuid.UUID, action: str, actor: Profile = Dep
 @router.post("/test-email")
 async def test_email(actor: Profile = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     """Attempt a real send to the admin's own email and return the exact result/error."""
-    import json
-    import urllib.error
-    import urllib.request
-
     import anyio
 
     from app.core.config import settings as _settings
@@ -407,27 +403,15 @@ async def test_email(actor: Profile = Depends(require_admin), db: AsyncSession =
     if not actor.email:
         return {"ok": False, "error": "Your admin account has no email address."}
 
-    payload = json.dumps({
-        "from": frm,
-        "to": [actor.email],
-        "subject": "Folio — test email",
-        "html": "<p>✅ This is a test email from Folio. If you received it, transactional email is working.</p>",
-    }).encode()
+    from app.services.email_service import smtp_send
 
     def _do():
-        req = urllib.request.Request(
-            "https://api.resend.com/emails",
-            data=payload,
-            method="POST",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        )
         try:
-            resp = urllib.request.urlopen(req, timeout=15)
-            return True, resp.read().decode()[:400]
-        except urllib.error.HTTPError as e:
-            return False, f"HTTP {e.code}: {e.read().decode()[:400]}"
+            smtp_send(api_key, frm, actor.email, "Folio — test email",
+                      "<p>✅ Test email from Folio via Resend SMTP. If you got this, email works.</p>")
+            return True, "sent via smtp.resend.com"
         except Exception as e:  # noqa: BLE001
-            return False, f"{type(e).__name__}: {str(e)[:300]}"
+            return False, f"{type(e).__name__}: {str(e)[:400]}"
 
     ok, detail = await anyio.to_thread.run_sync(_do)
     return {"ok": ok, "detail": detail, "to": actor.email, "from": frm}
