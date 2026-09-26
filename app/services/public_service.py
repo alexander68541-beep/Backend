@@ -57,6 +57,7 @@ async def get_published(db: AsyncSession, username: str) -> dict:
     stmt = select(Portfolio).where(
         func.lower(Portfolio.username) == name,
         Portfolio.status == "published",
+        Portfolio.visibility != "private",
         Portfolio.deleted_at.is_(None),
     )
     portfolio = (await db.execute(stmt)).scalar_one_or_none()

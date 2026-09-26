@@ -4,6 +4,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import CurrentUser, get_current_user
+from app.api.deps import get_current_account
+from app.core.errors import AppError
+from app.core.limits import effective_plan, limit_for
+from app.models import PlatformSettings, Profile
 from app.db.session import get_db
 from app.models import (
     Achievement,
@@ -64,10 +68,19 @@ def make_crud_router(*, prefix, tag, model, create_schema, update_schema, out_sc
     @router.post("", response_model=out_schema, status_code=201)
     async def create_item(
         payload: create_schema,
-        user: CurrentUser = Depends(get_current_user),
+        account: Profile = Depends(get_current_account),
         db: AsyncSession = Depends(get_db),
     ):
-        pid = await _pid(user, db)
+        pid = await _pid(account, db)
+        st = await db.get(PlatformSettings, 1)
+        lim = limit_for(tag, effective_plan(account.role, account.plan), st.plan_limits if st else None)
+        if lim is not None:
+            count = len(await crud.list_items(db, model, pid))
+            if count >= lim:
+                raise AppError(
+                    f"You've reached the {tag} limit ({lim}) for your plan. Upgrade to add more.",
+                    code="limit_reached", status_code=403,
+                )
         return await crud.create_item(db, model, pid, payload.model_dump())
 
     @router.post("/reorder", response_model=list[out_schema])

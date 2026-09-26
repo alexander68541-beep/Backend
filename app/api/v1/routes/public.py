@@ -103,6 +103,7 @@ async def list_published_usernames(db: AsyncSession = Depends(get_db)):
             _select(Portfolio.username)
             .where(
                 Portfolio.status == "published",
+                Portfolio.visibility == "public",
                 Portfolio.deleted_at.is_(None),
                 Portfolio.username.isnot(None),
             )

@@ -15,6 +15,7 @@ from app.schemas.portfolio import (
     StatusUpdateIn,
     AccentUpdateIn,
     SeoUpdateIn,
+    VisibilityIn,
     TemplateUpdateIn,
     UsernameSetIn,
 )
@@ -178,3 +179,53 @@ async def get_analytics(
     ).scalar_one()
     last7 = sum(s["count"] for s in series[-7:])
     return {"series": series, "total": int(total), "today": int(by_day.get(today, 0)), "last7": int(last7)}
+
+
+@router.patch("/visibility", response_model=PortfolioOut)
+async def update_visibility(
+    payload: VisibilityIn,
+    account: Profile = Depends(get_current_account),
+    db: AsyncSession = Depends(get_db),
+) -> PortfolioOut:
+    portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
+    portfolio.visibility = payload.visibility
+    await db.commit()
+    await db.refresh(portfolio)
+    return PortfolioOut.model_validate(portfolio)
+
+
+@router.get("/limits")
+async def get_limits(account: Profile = Depends(get_current_account), db: AsyncSession = Depends(get_db)):
+    from app.core.limits import effective_plan, entity_limits
+    st = await db.get(PlatformSettings, 1)
+    return {"plan": effective_plan(account.role, account.plan),
+            "limits": entity_limits(effective_plan(account.role, account.plan), st.plan_limits if st else None)}
+
+
+@router.get("/export")
+async def export_portfolio(account: Profile = Depends(get_current_account), db: AsyncSession = Depends(get_db)):
+    from app.services import public_service
+    portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
+    data = await public_service.get_owner_preview(db, portfolio)
+    pf = data["portfolio"]
+
+    def _dump(obj, fields):
+        return [{f: getattr(x, f, None) for f in fields} for x in obj]
+
+    prof = data["profile"]
+    return {
+        "username": pf.username, "template": pf.template, "accent": pf.accent, "visibility": pf.visibility,
+        "profile": {k: getattr(prof, k, None) for k in ["display_name","title","tagline","pronouns","bio","about","location","avatar_url","email","phone","website","availability","resume_url"]} if prof else None,
+        "projects": _dump(data["projects"], ["title","role","description","url","image_url","tags","start_date","end_date","is_featured"]),
+        "skills": _dump(data["skills"], ["name","category","level"]),
+        "experience": _dump(data["experience"], ["company","title","location","description","start_date","end_date","is_current"]),
+        "education": _dump(data["education"], ["school","degree","field","start_date","end_date","description"]),
+        "services": _dump(data["services"], ["title","description","price"]),
+        "certifications": _dump(data["certifications"], ["name","issuer","issue_date","credential_id","url"]),
+        "achievements": _dump(data["achievements"], ["title","description","date"]),
+        "testimonials": _dump(data["testimonials"], ["author","role","quote","avatar_url"]),
+        "publications": _dump(data["publications"], ["title","publisher","date","url","description"]),
+        "links": _dump(data["links"], ["platform","url","label"]),
+        "gallery": _dump(data["gallery"], ["image_url","caption"]),
+        "videos": _dump(data["videos"], ["title","url"]),
+    }

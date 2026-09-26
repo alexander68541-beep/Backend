@@ -28,6 +28,7 @@ class Portfolio(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(
         String(20), nullable=False, server_default=text("'draft'")
     )
+    visibility: Mapped[str] = mapped_column(String(16), nullable=False, server_default=text("'public'"))
     is_primary: Mapped[bool] = mapped_column(nullable=False, server_default=text("true"))
     template: Mapped[str] = mapped_column(String(40), nullable=False, server_default=text("'minimal'"))
     accent: Mapped[str] = mapped_column(String(9), nullable=False, server_default=text("'#7c6cff'"))

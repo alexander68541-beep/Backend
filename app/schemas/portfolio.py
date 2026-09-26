@@ -45,6 +45,7 @@ class PortfolioOut(BaseModel):
     id: uuid.UUID
     username: str | None = None
     status: str
+    visibility: str = "public"
     template: str = "minimal"
     accent: str = "#7c6cff"
     seo_title: str | None = None
@@ -76,3 +77,7 @@ class SeoUpdateIn(BaseModel):
     seo_title: str | None = Field(default=None, max_length=200)
     seo_description: str | None = Field(default=None, max_length=400)
     seo_image: str | None = Field(default=None, max_length=2048)
+
+
+class VisibilityIn(BaseModel):
+    visibility: str = Field(pattern=r"^(public|unlisted|private)$")

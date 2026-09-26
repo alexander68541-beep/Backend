@@ -92,3 +92,10 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Multiple Cloudinary accounts (admin list) with upload fallback A→B→C; media metadata table
 - [x] Multiple email (Resend) accounts + master on/off toggle; send falls back through accounts
 - [x] Email via HTTP API with browser UA (bypasses Cloudflare 1010); test-email surfaces real errors
+
+## Phase 17 — Entitlements + limits + export + privacy + sessions
+- [x] Centralised plan entitlements; free-plan content limits enforced on create (admin-overridable)
+- [x] CrudSection shows count/limit and gates 'Add' with an Upgrade prompt at the cap
+- [x] Data export: full portfolio JSON download
+- [x] Privacy: public / unlisted / private (private hidden, only public in sitemap)
+- [x] Sessions: sign out this device / all devices (global)

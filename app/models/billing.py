@@ -29,6 +29,7 @@ class PlatformSettings(Base):
     email_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
     email_accounts: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
     cloudinary_accounts: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
+    plan_limits: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
 
 
