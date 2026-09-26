@@ -3,6 +3,7 @@ from app.models.profile import Profile
 from app.models.portfolio import Portfolio, PortfolioProfile, UsernameHistory, ReservedUsername
 from app.models.billing import PlatformSettings, PaymentRequest
 from app.models.extras import CustomTemplate, Message
+from app.models.analytics import ViewDaily
 from app.models.portfolio_data import (
     Project,
     Skill,
@@ -41,4 +42,5 @@ __all__ = [
     "PaymentRequest",
     "CustomTemplate",
     "Message",
+    "ViewDaily",
 ]

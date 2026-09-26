@@ -14,6 +14,7 @@ from app.schemas.portfolio import (
     PortfolioProfileUpdate,
     StatusUpdateIn,
     AccentUpdateIn,
+    SeoUpdateIn,
     TemplateUpdateIn,
     UsernameSetIn,
 )
@@ -128,3 +129,52 @@ async def apply_custom_template(
     await db.commit()
     await db.refresh(portfolio)
     return PortfolioOut.model_validate(portfolio)
+
+
+@router.patch("/seo", response_model=PortfolioOut)
+async def update_seo(
+    payload: SeoUpdateIn,
+    account: Profile = Depends(get_current_account),
+    db: AsyncSession = Depends(get_db),
+) -> PortfolioOut:
+    portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(portfolio, field, (value or None))
+    await db.commit()
+    await db.refresh(portfolio)
+    return PortfolioOut.model_validate(portfolio)
+
+
+@router.get("/analytics")
+async def get_analytics(
+    account: Profile = Depends(get_current_account),
+    db: AsyncSession = Depends(get_db),
+):
+    from datetime import date, timedelta
+    from sqlalchemy import select as _select, func as _func
+    from app.models import ViewDaily
+
+    portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
+    today = date.today()
+    start = today - timedelta(days=29)
+
+    rows = (
+        await db.execute(
+            _select(ViewDaily.day, ViewDaily.count).where(
+                ViewDaily.portfolio_id == portfolio.id, ViewDaily.day >= start
+            )
+        )
+    ).all()
+    by_day = {r[0]: r[1] for r in rows}
+    series = []
+    for i in range(30):
+        d = start + timedelta(days=i)
+        series.append({"day": d.isoformat(), "count": int(by_day.get(d, 0))})
+
+    total = (
+        await db.execute(
+            _select(_func.coalesce(_func.sum(ViewDaily.count), 0)).where(ViewDaily.portfolio_id == portfolio.id)
+        )
+    ).scalar_one()
+    last7 = sum(s["count"] for s in series[-7:])
+    return {"series": series, "total": int(total), "today": int(by_day.get(today, 0)), "last7": int(last7)}

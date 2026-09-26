@@ -35,6 +35,9 @@ class PublicPortfolioOut(BaseModel):
     template: str = "minimal"
     accent: str = "#7c6cff"
     hide_branding: bool = False
+    seo_title: str | None = None
+    seo_description: str | None = None
+    seo_image: str | None = None
     profile: PortfolioProfileOut | None = None
     projects: list[ProjectOut] = []
     skills: list[SkillOut] = []
@@ -57,6 +60,9 @@ def _serialize(data, hide_branding: bool = False) -> "PublicPortfolioOut":
         template=pf.template,
         accent=pf.accent,
         hide_branding=hide_branding,
+        seo_title=pf.seo_title,
+        seo_description=pf.seo_description,
+        seo_image=pf.seo_image,
         profile=PortfolioProfileOut.model_validate(data["profile"]) if data["profile"] else None,
         projects=[ProjectOut.model_validate(x) for x in data["projects"]],
         skills=[SkillOut.model_validate(x) for x in data["skills"]],
@@ -101,6 +107,35 @@ async def list_published_usernames(db: AsyncSession = Depends(get_db)):
         )
     ).all()
     return [r[0] for r in rows]
+
+
+@router.post("/{username}/view")
+async def track_view(username: str, db: AsyncSession = Depends(get_db)):
+    from datetime import date
+    from sqlalchemy import select as _select, func as _func
+    from sqlalchemy.dialects.postgresql import insert as _pg_insert
+    from app.models import ViewDaily
+    from app.utils.username import normalize_username
+
+    row = (
+        await db.execute(
+            _select(Portfolio.id).where(
+                _func.lower(Portfolio.username) == normalize_username(username),
+                Portfolio.status == "published",
+                Portfolio.deleted_at.is_(None),
+            )
+        )
+    ).first()
+    if row is None:
+        return {"ok": False}
+    stmt = _pg_insert(ViewDaily).values(portfolio_id=row[0], day=date.today(), count=1)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["portfolio_id", "day"],
+        set_={"count": ViewDaily.count + 1},
+    )
+    await db.execute(stmt)
+    await db.commit()
+    return {"ok": True}
 
 
 @router.get("/{username}", response_model=PublicPortfolioOut)

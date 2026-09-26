@@ -47,6 +47,9 @@ class PortfolioOut(BaseModel):
     status: str
     template: str = "minimal"
     accent: str = "#7c6cff"
+    seo_title: str | None = None
+    seo_description: str | None = None
+    seo_image: str | None = None
     is_primary: bool
     username_change_count: int
     username_changed_at: datetime | None = None
@@ -67,3 +70,9 @@ class TemplateUpdateIn(BaseModel):
 
 class AccentUpdateIn(BaseModel):
     accent: str = Field(min_length=4, max_length=9, pattern=r"^#[0-9a-fA-F]{6}$")
+
+
+class SeoUpdateIn(BaseModel):
+    seo_title: str | None = Field(default=None, max_length=200)
+    seo_description: str | None = Field(default=None, max_length=400)
+    seo_image: str | None = Field(default=None, max_length=2048)

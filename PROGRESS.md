@@ -70,3 +70,8 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] External links without a scheme are auto-prefixed https:// (no more broken relative URLs)
 - [x] Public pages: Open Graph + Twitter meta + canonical (per portfolio, avatar as image)
 - [x] sitemap.xml (published portfolios) + robots.txt; SSR pages for Google
+
+## Phase 12.1 — Analytics + real SEO + desktop preview
+- [x] View analytics: per-portfolio daily views (beacon), dashboard chart (total/7d/today)
+- [x] SEO page is real: per-portfolio meta title, description, og:image (overrides defaults)
+- [x] Template thumbnails render the full desktop view (auto-fit), not a crop
