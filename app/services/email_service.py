@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import smtplib
-import ssl
-from email.message import EmailMessage
+import json
+import urllib.error
+import urllib.request
 
 import anyio
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,20 +10,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models import PlatformSettings
 
+# A real browser UA — Resend's API is behind Cloudflare, whose "browser integrity
+# check" (error 1010) blocks the default Python-urllib User-Agent.
+_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
 
-def smtp_send(api_key: str, frm: str, to: str, subject: str, html: str) -> None:
-    """Send via Resend SMTP (smtp.resend.com:465). Username is literally 'resend',
-    password is the Resend API key. SMTP avoids the Cloudflare bot check on the HTTP API."""
-    msg = EmailMessage()
-    msg["From"] = frm
-    msg["To"] = to
-    msg["Subject"] = subject
-    msg.set_content("Please view this email in an HTML-capable client.")
-    msg.add_alternative(html, subtype="html")
-    ctx = ssl.create_default_context()
-    with smtplib.SMTP_SSL("smtp.resend.com", 465, context=ctx, timeout=20) as server:
-        server.login("resend", api_key)
-        server.send_message(msg)
+
+def http_send(api_key: str, frm: str, to: str, subject: str, html: str) -> None:
+    payload = json.dumps({"from": frm, "to": [to], "subject": subject, "html": html}).encode()
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": _UA,
+        },
+    )
+    urllib.request.urlopen(req, timeout=15).read()
 
 
 async def resolve_creds(db: AsyncSession) -> tuple[str | None, str | None]:
@@ -40,7 +45,7 @@ async def send_email(db: AsyncSession, to: str | None, subject: str, html: str) 
     if not (api_key and frm):
         return False
     try:
-        await anyio.to_thread.run_sync(smtp_send, api_key, frm, to, subject, html)
+        await anyio.to_thread.run_sync(http_send, api_key, frm, to, subject, html)
         return True
     except Exception:
         return False

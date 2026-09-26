@@ -403,13 +403,20 @@ async def test_email(actor: Profile = Depends(require_admin), db: AsyncSession =
     if not actor.email:
         return {"ok": False, "error": "Your admin account has no email address."}
 
-    from app.services.email_service import smtp_send
+    import urllib.error
+    from app.services.email_service import http_send
 
     def _do():
         try:
-            smtp_send(api_key, frm, actor.email, "Folio — test email",
-                      "<p>✅ Test email from Folio via Resend SMTP. If you got this, email works.</p>")
-            return True, "sent via smtp.resend.com"
+            http_send(api_key, frm, actor.email, "Folio — test email",
+                      "<p>✅ Test email from Folio. If you got this, email works.</p>")
+            return True, "sent"
+        except urllib.error.HTTPError as e:
+            try:
+                body = e.read().decode()[:400]
+            except Exception:
+                body = ""
+            return False, f"HTTP {e.code}: {body}"
         except Exception as e:  # noqa: BLE001
             return False, f"{type(e).__name__}: {str(e)[:400]}"
 
