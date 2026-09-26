@@ -50,3 +50,8 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] free/pro plan; PRO templates unlock for pro (or admin)
 - [x] admin-controlled settings: price, currency, pro features, BEP-20 / Nagad / bKash, note
 - [x] user Upgrade page: methods, submit TxID + screenshot; admin approve/reject -> upgrades user
+
+## Phase 11 — Template builder + Messaging  🟡
+- [x] Admin builds custom templates (base + accent + category + plan) — appear for users by category
+- [x] Users apply custom templates; PRO ones gated by plan
+- [x] Messaging: user↔admin thread (custom-template requests etc.), admin inbox + reply, realtime polling

@@ -5,8 +5,9 @@ from app.core.config import settings
 from app.core.rate_limit import limiter
 from app.core.security import CurrentUser, get_current_user
 from app.api.deps import get_current_account
-from app.core.features import has_feature
-from app.models import PlatformSettings, Profile
+from app.core.features import has_feature, is_pro_account
+from app.models import CustomTemplate, PlatformSettings, Profile
+from app.schemas.extras import ApplyTemplateIn
 from app.db.session import get_db
 from app.schemas.portfolio import (
     PortfolioOut,
@@ -93,4 +94,25 @@ async def update_accent(
 ) -> PortfolioOut:
     portfolio = await portfolio_service.ensure_primary_portfolio(db, user.id)
     portfolio = await portfolio_service.update_accent(db, portfolio, payload.accent)
+    return PortfolioOut.model_validate(portfolio)
+
+
+@router.post("/apply-template", response_model=PortfolioOut)
+async def apply_custom_template(
+    payload: ApplyTemplateIn,
+    account: Profile = Depends(get_current_account),
+    db: AsyncSession = Depends(get_db),
+) -> PortfolioOut:
+    tpl = await db.get(CustomTemplate, payload.template_id)
+    if tpl is None or not tpl.is_published:
+        from app.core.errors import AppError
+        raise AppError("Template not found", code="not_found", status_code=404)
+    if tpl.plan == "pro" and not is_pro_account(account.role, account.plan):
+        from app.core.errors import AppError
+        raise AppError("This template is Pro. Upgrade to use it.", code="template_locked", status_code=403)
+    portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
+    portfolio.template = tpl.base
+    portfolio.accent = tpl.accent
+    await db.commit()
+    await db.refresh(portfolio)
     return PortfolioOut.model_validate(portfolio)

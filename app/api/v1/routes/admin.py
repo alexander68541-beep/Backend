@@ -214,3 +214,105 @@ async def reject_payment(payment_id: uuid.UUID, db: AsyncSession = Depends(get_d
     pr.status = "rejected"
     await db.commit()
     return {"ok": True}
+
+
+from sqlalchemy import update as _sql_update
+
+from app.models import CustomTemplate, Message
+from app.schemas.extras import (
+    CustomTemplateIn,
+    CustomTemplateOut,
+    CustomTemplateUpdate,
+    MessageIn,
+    MessageOut,
+    ThreadOut,
+)
+
+_TEMPLATE_BASES = {"minimal", "bold", "editorial", "studio"}
+
+
+# ---------- custom templates (admin builder) ----------
+@router.get("/templates", response_model=list[CustomTemplateOut])
+async def admin_list_templates(db: AsyncSession = Depends(get_db)):
+    rows = (await db.execute(select(CustomTemplate).order_by(CustomTemplate.created_at.desc()))).scalars().all()
+    return [CustomTemplateOut.model_validate(r) for r in rows]
+
+
+@router.post("/templates", response_model=CustomTemplateOut, status_code=201)
+async def admin_create_template(payload: CustomTemplateIn, db: AsyncSession = Depends(get_db)):
+    if payload.base not in _TEMPLATE_BASES:
+        raise HTTPException(status_code=422, detail="Invalid base layout")
+    if payload.plan not in ("free", "pro"):
+        raise HTTPException(status_code=422, detail="Invalid plan")
+    t = CustomTemplate(**payload.model_dump())
+    db.add(t)
+    await db.commit()
+    await db.refresh(t)
+    return CustomTemplateOut.model_validate(t)
+
+
+@router.patch("/templates/{template_id}", response_model=CustomTemplateOut)
+async def admin_update_template(template_id: uuid.UUID, payload: CustomTemplateUpdate, db: AsyncSession = Depends(get_db)):
+    t = await db.get(CustomTemplate, template_id)
+    if t is None:
+        raise HTTPException(status_code=404, detail="Not found")
+    data = payload.model_dump(exclude_unset=True)
+    if "base" in data and data["base"] not in _TEMPLATE_BASES:
+        raise HTTPException(status_code=422, detail="Invalid base layout")
+    for k, v in data.items():
+        setattr(t, k, v)
+    await db.commit()
+    await db.refresh(t)
+    return CustomTemplateOut.model_validate(t)
+
+
+@router.delete("/templates/{template_id}")
+async def admin_delete_template(template_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    t = await db.get(CustomTemplate, template_id)
+    if t is not None:
+        await db.delete(t)
+        await db.commit()
+    return {"ok": True}
+
+
+# ---------- messaging (admin side) ----------
+@router.get("/messages", response_model=list[ThreadOut])
+async def admin_threads(db: AsyncSession = Depends(get_db)):
+    rows = (
+        await db.execute(
+            select(Message, Profile.email)
+            .join(Profile, Profile.id == Message.user_id)
+            .order_by(Message.created_at.desc())
+            .limit(2000)
+        )
+    ).all()
+    threads: dict = {}
+    for m, email in rows:
+        t = threads.get(m.user_id)
+        if t is None:
+            threads[m.user_id] = {"user_id": m.user_id, "email": email, "last_body": m.body, "last_at": m.created_at, "unread": 0}
+            t = threads[m.user_id]
+        if m.sender == "user" and not m.read:
+            t["unread"] += 1
+    return [ThreadOut(**t) for t in threads.values()]
+
+
+@router.get("/messages/{user_id}", response_model=list[MessageOut])
+async def admin_thread(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    rows = (
+        await db.execute(select(Message).where(Message.user_id == user_id).order_by(Message.created_at.asc()))
+    ).scalars().all()
+    await db.execute(
+        _sql_update(Message).where(Message.user_id == user_id, Message.sender == "user", Message.read == False).values(read=True)  # noqa: E712
+    )
+    await db.commit()
+    return [MessageOut.model_validate(m) for m in rows]
+
+
+@router.post("/messages/{user_id}", response_model=MessageOut, status_code=201)
+async def admin_reply(user_id: uuid.UUID, payload: MessageIn, db: AsyncSession = Depends(get_db)):
+    m = Message(user_id=user_id, sender="admin", body=payload.body, read=False)
+    db.add(m)
+    await db.commit()
+    await db.refresh(m)
+    return MessageOut.model_validate(m)

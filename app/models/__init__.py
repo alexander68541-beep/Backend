@@ -2,6 +2,7 @@ from app.models.base import Base
 from app.models.profile import Profile
 from app.models.portfolio import Portfolio, PortfolioProfile, UsernameHistory, ReservedUsername
 from app.models.billing import PlatformSettings, PaymentRequest
+from app.models.extras import CustomTemplate, Message
 from app.models.portfolio_data import (
     Project,
     Skill,
@@ -38,4 +39,6 @@ __all__ = [
     "Video",
     "PlatformSettings",
     "PaymentRequest",
+    "CustomTemplate",
+    "Message",
 ]
