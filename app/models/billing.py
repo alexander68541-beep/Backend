@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Integer, String, Text, text, ForeignKey, DateTime
+from sqlalchemy import Boolean, Integer, String, Text, text, ForeignKey, DateTime
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -26,6 +26,9 @@ class PlatformSettings(Base):
     resend_api_key: Mapped[str | None] = mapped_column(Text)
     email_from: Mapped[str | None] = mapped_column(Text)
     flags: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
+    email_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    email_accounts: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
+    cloudinary_accounts: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
 
 

@@ -166,7 +166,7 @@ Admins see an **Admin** item in the dashboard sidebar (platform stats + all port
 use PRO templates (e.g. **Studio**). Regular users see the free templates only.
 
 ## Billing / plans (Phase 10)
-Run migrations `0010_billing.sql`, `0011_settings_ext.sql` `0012_templates_messages.sql` `0013_template_registry.sql`, `0014_seed_aurora.sql` `0015_template_preview.sql` `0016_seo_analytics.sql` `0017_contact_notifications.sql` and `0018_audit_flags_reports.sql`. Admins set price, pro features and payment details
+Run migrations `0010_billing.sql`, `0011_settings_ext.sql` `0012_templates_messages.sql` `0013_template_registry.sql`, `0014_seed_aurora.sql` `0015_template_preview.sql` `0016_seo_analytics.sql` `0017_contact_notifications.sql` `0018_audit_flags_reports.sql` and `0019_media_multi.sql`. Admins set price, pro features and payment details
 (USDT BEP-20 address, Nagad, bKash) in **Dashboard -> Admin -> Billing settings**. Users
 pay manually, submit TxID + screenshot on **Dashboard -> Upgrade**, and an admin approves
 the payment (which flips the user's plan to `pro`, unlocking PRO templates).

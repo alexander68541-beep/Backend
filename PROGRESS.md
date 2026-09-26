@@ -87,3 +87,8 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Audit logs for admin actions (suspend/delete/role/payment/template/report) + Audit tab (paginated)
 - [x] Feature flags (enable_registration/public/contact) — admin toggles; contact form gated
 - [x] Moderation: public Report link → reports queue; admin Suspend/Dismiss
+
+## Phase 16 — Media multi-account + Email multi-account
+- [x] Multiple Cloudinary accounts (admin list) with upload fallback A→B→C; media metadata table
+- [x] Multiple email (Resend) accounts + master on/off toggle; send falls back through accounts
+- [x] Email via HTTP API with browser UA (bypasses Cloudflare 1010); test-email surfaces real errors

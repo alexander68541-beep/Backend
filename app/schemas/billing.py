@@ -64,6 +64,9 @@ class SettingsOut(BaseModel):
     email_from: str | None = None
     email_configured: bool = False
     flags: dict = {}
+    email_enabled: bool = True
+    email_accounts: list[dict] = []
+    cloudinary_accounts: list[dict] = []
 
 
 class SettingsUpdate(BaseModel):
@@ -79,3 +82,6 @@ class SettingsUpdate(BaseModel):
     resend_api_key: str | None = None
     email_from: str | None = None
     flags: dict | None = None
+    email_enabled: bool | None = None
+    email_accounts: list[dict] | None = None
+    cloudinary_accounts: list[dict] | None = None
