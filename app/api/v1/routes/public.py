@@ -147,6 +147,9 @@ async def contact(request: Request, username: str, payload: ContactIn, db: Async
     # honeypot: if a bot filled the hidden field, silently accept without storing
     if payload.website:
         return {"ok": True}
+    _s = await db.get(PlatformSettings, 1)
+    if _s and isinstance(_s.flags, dict) and _s.flags.get("enable_contact") is False:
+        return {"ok": False, "disabled": True}
     from sqlalchemy import func as _func, select as _select
     from app.utils.username import normalize_username
     from app.services.email_service import notify, send_email
@@ -177,6 +180,30 @@ async def contact(request: Request, username: str, payload: ContactIn, db: Async
             f"<p>{payload.message}</p>"
         )
         await send_email(db, owner.email, "New message on your Folio portfolio", html)
+    return {"ok": True}
+
+
+@router.get("/flags")
+async def public_flags(db: AsyncSession = Depends(get_db)):
+    s = await db.get(PlatformSettings, 1)
+    return (s.flags if s and isinstance(s.flags, dict) else {})
+
+
+@router.post("/{username}/report")
+@limiter.limit("4/minute")
+async def report_portfolio(request: Request, username: str, payload: dict, db: AsyncSession = Depends(get_db)):
+    from app.models import Report
+    from app.utils.username import normalize_username
+    from sqlalchemy import func as _func, select as _select
+
+    reason = str(payload.get("reason") or "").strip()[:120]
+    detail = str(payload.get("detail") or "").strip()[:2000] or None
+    if not reason:
+        return {"ok": False}
+    name = normalize_username(username)
+    row = (await db.execute(_select(Portfolio.id).where(_func.lower(Portfolio.username) == name))).first()
+    db.add(Report(portfolio_id=(row[0] if row else None), username=name, reason=reason, detail=detail))
+    await db.commit()
     return {"ok": True}
 
 

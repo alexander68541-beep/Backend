@@ -25,6 +25,7 @@ class PlatformSettings(Base):
     cloudinary_folder: Mapped[str | None] = mapped_column(Text)
     resend_api_key: Mapped[str | None] = mapped_column(Text)
     email_from: Mapped[str | None] = mapped_column(Text)
+    flags: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
 
 

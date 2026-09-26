@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     PUBLIC_PORTFOLIO_URL: str = "http://localhost:3000"
     API_URL: str = "http://localhost:8000"
     CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGIN_REGEX: str = ""  # optional; auto-derived from APP_URL if empty
 
     # Supabase
     SUPABASE_URL: str = ""

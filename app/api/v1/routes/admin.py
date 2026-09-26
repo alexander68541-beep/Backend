@@ -3,6 +3,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin
+from app.services import audit
 from app.db.session import get_db
 from app.models import Portfolio, Profile
 
@@ -77,7 +78,7 @@ class ReservedIn(BaseModel):
 
 @router.patch("/portfolios/{portfolio_id}/status")
 async def set_portfolio_status(
-    portfolio_id: uuid.UUID, payload: AdminStatusIn, db: AsyncSession = Depends(get_db)
+    portfolio_id: uuid.UUID, payload: AdminStatusIn, actor: Profile = Depends(require_admin), db: AsyncSession = Depends(get_db)
 ):
     if payload.status not in _VALID_STATUS:
         raise HTTPException(status_code=422, detail="Invalid status")
@@ -85,16 +86,18 @@ async def set_portfolio_status(
     if pf is None:
         raise HTTPException(status_code=404, detail="Portfolio not found")
     pf.status = payload.status
+    await audit.log(db, actor.email, "portfolio.status", str(portfolio_id), {"status": payload.status})
     await db.commit()
     return {"ok": True, "status": pf.status}
 
 
 @router.delete("/portfolios/{portfolio_id}", status_code=200)
-async def delete_portfolio(portfolio_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def delete_portfolio(portfolio_id: uuid.UUID, actor: Profile = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     pf = await db.get(Portfolio, portfolio_id)
     if pf is None:
         raise HTTPException(status_code=404, detail="Portfolio not found")
     pf.deleted_at = datetime.now(timezone.utc)
+    await audit.log(db, actor.email, "portfolio.delete", str(portfolio_id))
     await db.commit()
     return {"ok": True}
 
@@ -109,7 +112,7 @@ async def list_users(db: AsyncSession = Depends(get_db)):
 
 @router.patch("/users/{user_id}/role")
 async def set_user_role(
-    user_id: uuid.UUID, payload: AdminRoleIn, db: AsyncSession = Depends(get_db)
+    user_id: uuid.UUID, payload: AdminRoleIn, actor: Profile = Depends(require_admin), db: AsyncSession = Depends(get_db)
 ):
     if payload.role not in _VALID_ROLES:
         raise HTTPException(status_code=422, detail="Invalid role")
@@ -117,6 +120,7 @@ async def set_user_role(
     if u is None:
         raise HTTPException(status_code=404, detail="User not found")
     u.role = payload.role
+    await audit.log(db, actor.email, "user.role", str(user_id), {"role": payload.role})
     await db.commit()
     return {"ok": True, "role": u.role}
 
@@ -200,7 +204,7 @@ async def list_payments(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/payments/{payment_id}/approve")
-async def approve_payment(payment_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def approve_payment(payment_id: uuid.UUID, actor: Profile = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     pr = await db.get(PaymentRequest, payment_id)
     if pr is None:
         raise HTTPException(status_code=404, detail="Payment not found")
@@ -208,6 +212,7 @@ async def approve_payment(payment_id: uuid.UUID, db: AsyncSession = Depends(get_
     user = await db.get(Profile, pr.user_id)
     if user is not None:
         user.plan = "pro"
+        await audit.log(db, actor.email, "payment.approve", str(payment_id), {"user": user.email})
         from app.services.email_service import notify, send_email
         await notify(db, user.id, "billing", "Payment approved", "You're now on Pro — enjoy all premium features!")
         await db.commit()
@@ -220,11 +225,12 @@ async def approve_payment(payment_id: uuid.UUID, db: AsyncSession = Depends(get_
 
 
 @router.post("/payments/{payment_id}/reject")
-async def reject_payment(payment_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def reject_payment(payment_id: uuid.UUID, actor: Profile = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     pr = await db.get(PaymentRequest, payment_id)
     if pr is None:
         raise HTTPException(status_code=404, detail="Payment not found")
     pr.status = "rejected"
+    await audit.log(db, actor.email, "payment.reject", str(payment_id))
     await db.commit()
     return {"ok": True}
 
@@ -279,9 +285,10 @@ async def admin_update_template(template_id: uuid.UUID, payload: CustomTemplateU
 
 
 @router.delete("/templates/{template_id}")
-async def admin_delete_template(template_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def admin_delete_template(template_id: uuid.UUID, actor: Profile = Depends(require_admin), db: AsyncSession = Depends(get_db)):
     t = await db.get(CustomTemplate, template_id)
     if t is not None:
+        await audit.log(db, actor.email, "template.delete", str(template_id), {"name": t.name})
         await db.delete(t)
         await db.commit()
     return {"ok": True}
@@ -328,3 +335,50 @@ async def admin_reply(user_id: uuid.UUID, payload: MessageIn, db: AsyncSession =
     await db.commit()
     await db.refresh(m)
     return MessageOut.model_validate(m)
+
+
+from app.models import AuditLog, Report
+
+
+@router.get("/audit")
+async def list_audit(limit: int = 50, offset: int = 0, db: AsyncSession = Depends(get_db)):
+    rows = (
+        await db.execute(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(min(limit, 100)).offset(offset))
+    ).scalars().all()
+    return [
+        {"id": str(r.id), "actor_email": r.actor_email, "action": r.action, "target": r.target,
+         "meta": r.meta, "created_at": r.created_at.isoformat() if r.created_at else None}
+        for r in rows
+    ]
+
+
+@router.get("/reports")
+async def list_reports(status: str | None = None, limit: int = 50, offset: int = 0, db: AsyncSession = Depends(get_db)):
+    q = select(Report).order_by(Report.created_at.desc())
+    if status:
+        q = q.where(Report.status == status)
+    rows = (await db.execute(q.limit(min(limit, 100)).offset(offset))).scalars().all()
+    return [
+        {"id": str(r.id), "portfolio_id": str(r.portfolio_id) if r.portfolio_id else None, "username": r.username,
+         "reason": r.reason, "detail": r.detail, "status": r.status,
+         "created_at": r.created_at.isoformat() if r.created_at else None}
+        for r in rows
+    ]
+
+
+@router.post("/reports/{report_id}/resolve")
+async def resolve_report(report_id: uuid.UUID, action: str, actor: Profile = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    r = await db.get(Report, report_id)
+    if r is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if action == "suspend" and r.portfolio_id:
+        pf = await db.get(Portfolio, r.portfolio_id)
+        if pf is not None:
+            pf.status = "suspended"
+        r.status = "actioned"
+        await audit.log(db, actor.email, "report.suspend", str(report_id), {"portfolio": str(r.portfolio_id)})
+    else:
+        r.status = "dismissed"
+        await audit.log(db, actor.email, "report.dismiss", str(report_id))
+    await db.commit()
+    return {"ok": True}

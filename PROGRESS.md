@@ -81,3 +81,9 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] In-app notifications (bell + unread count + notifications page); contact & payment events
 - [x] Transactional email via Resend (admin-configured): contact received, payment approved
 - [x] Fixed latent bug: /public/usernames & /view now import Portfolio (sitemap + analytics work)
+
+## Phase 15 — Audit + Feature flags + Moderation + CORS fix
+- [x] CORS now allows portfolio subdomains (regex from APP_URL) — contact/view work from *.domain
+- [x] Audit logs for admin actions (suspend/delete/role/payment/template/report) + Audit tab (paginated)
+- [x] Feature flags (enable_registration/public/contact) — admin toggles; contact form gated
+- [x] Moderation: public Report link → reports queue; admin Suspend/Dismiss

@@ -1,4 +1,6 @@
 import logging
+import re
+from urllib.parse import urlparse
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -21,6 +23,21 @@ async def lifespan(_: FastAPI):
     yield
     await dispose_engine()
 
+
+
+
+def _cors_origin_regex() -> str:
+    if settings.CORS_ORIGIN_REGEX:
+        return settings.CORS_ORIGIN_REGEX
+    host = ""
+    try:
+        host = urlparse(settings.APP_URL).hostname or ""
+    except Exception:
+        host = ""
+    parts = [r"localhost(:\d+)?", r"127\.0\.0\.1(:\d+)?", r"([a-z0-9-]+\.)*vercel\.app"]
+    if host and "vercel.app" not in host:
+        parts.append(r"([a-z0-9-]+\.)*" + re.escape(host))
+    return r"^https?://(" + "|".join(parts) + r")$"
 
 app = FastAPI(
     title="Folio API",
@@ -51,6 +68,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
+    allow_origin_regex=_cors_origin_regex(),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],

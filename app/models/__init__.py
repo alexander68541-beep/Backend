@@ -5,6 +5,7 @@ from app.models.billing import PlatformSettings, PaymentRequest
 from app.models.extras import CustomTemplate, Message
 from app.models.analytics import ViewDaily
 from app.models.inbox import ContactSubmission, Notification
+from app.models.moderation import AuditLog, Report
 from app.models.portfolio_data import (
     Project,
     Skill,
@@ -46,4 +47,6 @@ __all__ = [
     "ViewDaily",
     "ContactSubmission",
     "Notification",
+    "AuditLog",
+    "Report",
 ]
