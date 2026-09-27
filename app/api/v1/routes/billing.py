@@ -73,3 +73,11 @@ async def my_payments(
         )
     ).scalars().all()
     return [PaymentOut.model_validate(r) for r in rows]
+
+
+@router.post("/downgrade")
+async def downgrade(account: Profile = Depends(get_current_account), db: AsyncSession = Depends(get_db)):
+    """Self-service downgrade to the free plan."""
+    account.plan = "free"
+    await db.commit()
+    return {"ok": True, "plan": "free"}

@@ -178,3 +178,10 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Site name/logo now shows in the dashboard sidebar too (<Brand> everywhere)
 - [x] Public /pricing page (dynamic per-plan features); Pricing/Contact links in header & footer
 - [x] Custom accent already per-plan gated; billing/info features.has is per-plan
+
+## Upgrade/downgrade + per-plan limits UI + docs
+- [x] Billing: upgrade / switch / downgrade to Free (self-service); always shows plans + current
+- [x] Admin: per-plan limits editor (pick plan, set item caps; blank = unlimited)
+- [x] Pricing page shows monthly/yearly/lifetime prices + per-plan item limits + features
+- [x] /docs documentation page (how it works, plans, features) + in header/footer/sitemap
+- [x] Footer links horizontal (landscape)

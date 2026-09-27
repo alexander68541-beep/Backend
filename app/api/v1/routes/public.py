@@ -241,6 +241,15 @@ async def build_snapshot(db: AsyncSession, portfolio) -> dict:
     hide = bool(owner) and has_feature("remove_branding", (s.plans if s else []), owner.role, owner.plan)
     return _serialize(data, hide_branding=hide).model_dump(mode="json")
 
+def _plan_limits_map(s) -> dict:
+    from app.core.limits import entity_limits
+    keys = ["free"] + [p.get("key") for p in (s.plans or []) if isinstance(p, dict) and p.get("key")]
+    out = {}
+    for k in keys:
+        out[k] = entity_limits(k, s.plan_limits if s else None)
+    return out
+
+
 @router.get("/branding")
 async def branding(db: AsyncSession = Depends(get_db)):
     s = await db.get(PlatformSettings, 1)
@@ -256,6 +265,7 @@ async def branding(db: AsyncSession = Depends(get_db)):
         "contact_note": s.contact_note,
         "currency": s.currency,
         "plans": [p for p in (s.plans or []) if isinstance(p, dict)],
+        "limits": _plan_limits_map(s),
     }
 
 
