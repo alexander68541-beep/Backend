@@ -152,22 +152,46 @@ async def remove_reserved(name: str, db: AsyncSession = Depends(get_db)):
 
 
 from app.models import PlatformSettings, PaymentRequest
-from app.schemas.billing import SettingsOut, SettingsUpdate, AdminPaymentOut
+from app.schemas.billing import SettingsOut, SettingsUpdate, AdminPaymentOut, PaymentMethod
 
 
 @router.get("/settings", response_model=SettingsOut)
-def _merge_legacy(s, out):
-    """Surface any legacy single-field email/Cloudinary config as an editable account
-    so the admin can see and manage everything from the lists."""
-    ea = list(out.email_accounts or [])
-    if s.email_from and s.resend_api_key and not any((a or {}).get("from") == s.email_from for a in ea):
+def _settings_out(s) -> SettingsOut:
+    """Build SettingsOut defensively so no stored value can break response validation,
+    and surface any legacy single-field email/Cloudinary config as an editable account."""
+    def _methods(raw):
+        out = []
+        for m in (raw or []):
+            if isinstance(m, dict) and m.get("name") is not None and m.get("value") is not None:
+                out.append(PaymentMethod(name=str(m["name"]), value=str(m["value"])))
+        return out
+
+    ea = [a for a in (s.email_accounts or []) if isinstance(a, dict)]
+    if s.email_from and s.resend_api_key and not any(a.get("from") == s.email_from for a in ea):
         ea.append({"name": "default", "from": s.email_from, "api_key": s.resend_api_key, "active": True})
-    out.email_accounts = ea
-    ca = list(out.cloudinary_accounts or [])
-    if s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret and not any((a or {}).get("cloud_name") == s.cloudinary_cloud_name for a in ca):
+    ca = [a for a in (s.cloudinary_accounts or []) if isinstance(a, dict)]
+    if s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret and not any(a.get("cloud_name") == s.cloudinary_cloud_name for a in ca):
         ca.append({"name": "default", "cloud_name": s.cloudinary_cloud_name, "api_key": s.cloudinary_api_key,
                    "api_secret": s.cloudinary_api_secret, "folder": s.cloudinary_folder or "folio", "active": True})
-    out.cloudinary_accounts = ca
+
+    return SettingsOut(
+        pro_price=s.pro_price, currency=s.currency,
+        pro_features=list(s.pro_features or []),
+        payment_note=s.payment_note,
+        payment_methods=_methods(s.payment_methods),
+        cloudinary_cloud_name=s.cloudinary_cloud_name,
+        cloudinary_api_key=s.cloudinary_api_key,
+        cloudinary_folder=s.cloudinary_folder,
+        cloudinary_configured=bool(s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret),
+        email_from=s.email_from,
+        email_configured=bool(s.resend_api_key and s.email_from),
+        flags=dict(s.flags or {}),
+        email_enabled=bool(s.email_enabled),
+        email_accounts=ea,
+        cloudinary_accounts=ca,
+        plan_limits=dict(s.plan_limits or {}),
+        plans=[p for p in (s.plans or []) if isinstance(p, dict)],
+    )
 
 
 async def get_settings(db: AsyncSession = Depends(get_db)):
@@ -177,11 +201,7 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
         db.add(s)
         await db.commit()
         await db.refresh(s)
-    out = SettingsOut.model_validate(s)
-    out.cloudinary_configured = bool(s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret)
-    out.email_configured = bool(s.resend_api_key and s.email_from)
-    _merge_legacy(s, out)
-    return out
+    return _settings_out(s)
 
 
 @router.patch("/settings", response_model=SettingsOut)
@@ -194,11 +214,7 @@ async def update_settings(payload: SettingsUpdate, db: AsyncSession = Depends(ge
         setattr(s, k, v)
     await db.commit()
     await db.refresh(s)
-    out = SettingsOut.model_validate(s)
-    out.cloudinary_configured = bool(s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret)
-    out.email_configured = bool(s.resend_api_key and s.email_from)
-    _merge_legacy(s, out)
-    return out
+    return _settings_out(s)
 
 
 @router.get("/payments", response_model=list[AdminPaymentOut])
