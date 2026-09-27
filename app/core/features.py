@@ -17,6 +17,5 @@ def is_pro_account(role: str, plan: str) -> bool:
 
 
 def has_feature(key: str, pro_features: list[str], role: str, plan: str) -> bool:
-    if key not in (pro_features or []):
-        return True  # not gated -> free for everyone
+    # All catalogue features are premium: unlocked by any paid plan (Pro/Max) or admin.
     return is_pro_account(role, plan)

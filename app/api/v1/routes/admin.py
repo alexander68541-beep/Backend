@@ -156,6 +156,20 @@ from app.schemas.billing import SettingsOut, SettingsUpdate, AdminPaymentOut
 
 
 @router.get("/settings", response_model=SettingsOut)
+def _merge_legacy(s, out):
+    """Surface any legacy single-field email/Cloudinary config as an editable account
+    so the admin can see and manage everything from the lists."""
+    ea = list(out.email_accounts or [])
+    if s.email_from and s.resend_api_key and not any((a or {}).get("from") == s.email_from for a in ea):
+        ea.append({"name": "default", "from": s.email_from, "api_key": s.resend_api_key, "active": True})
+    out.email_accounts = ea
+    ca = list(out.cloudinary_accounts or [])
+    if s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret and not any((a or {}).get("cloud_name") == s.cloudinary_cloud_name for a in ca):
+        ca.append({"name": "default", "cloud_name": s.cloudinary_cloud_name, "api_key": s.cloudinary_api_key,
+                   "api_secret": s.cloudinary_api_secret, "folder": s.cloudinary_folder or "folio", "active": True})
+    out.cloudinary_accounts = ca
+
+
 async def get_settings(db: AsyncSession = Depends(get_db)):
     s = await db.get(PlatformSettings, 1)
     if s is None:
@@ -166,6 +180,7 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
     out = SettingsOut.model_validate(s)
     out.cloudinary_configured = bool(s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret)
     out.email_configured = bool(s.resend_api_key and s.email_from)
+    _merge_legacy(s, out)
     return out
 
 
@@ -182,6 +197,7 @@ async def update_settings(payload: SettingsUpdate, db: AsyncSession = Depends(ge
     out = SettingsOut.model_validate(s)
     out.cloudinary_configured = bool(s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret)
     out.email_configured = bool(s.resend_api_key and s.email_from)
+    _merge_legacy(s, out)
     return out
 
 

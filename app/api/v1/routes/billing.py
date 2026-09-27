@@ -22,7 +22,7 @@ async def billing_info(
     features = [
         FeatureOut(
             key=f["key"], label=f["label"], desc=f["desc"],
-            pro=(f["key"] in pro_features),
+            pro=True,
             has=has_feature(f["key"], pro_features, account.role, account.plan),
         )
         for f in FEATURE_CATALOG
