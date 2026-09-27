@@ -101,3 +101,8 @@ class SettingsUpdate(BaseModel):
     seo_keywords: str | None = None
     seo_description: str | None = None
     footer_text: str | None = None
+    contact_email: str | None = None
+    contact_phone: str | None = None
+    contact_whatsapp: str | None = None
+    contact_address: str | None = None
+    contact_note: str | None = None

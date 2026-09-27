@@ -27,6 +27,11 @@ alter table public.platform_settings add column if not exists google_site_verifi
 alter table public.platform_settings add column if not exists seo_keywords text;
 alter table public.platform_settings add column if not exists seo_description text;
 alter table public.platform_settings add column if not exists footer_text text;
+alter table public.platform_settings add column if not exists contact_email text;
+alter table public.platform_settings add column if not exists contact_phone text;
+alter table public.platform_settings add column if not exists contact_whatsapp text;
+alter table public.platform_settings add column if not exists contact_address text;
+alter table public.platform_settings add column if not exists contact_note text;
 
 -- portfolios
 alter table public.portfolios add column if not exists seo_title text;

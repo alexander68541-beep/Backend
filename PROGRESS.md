@@ -164,3 +164,10 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Privacy, Terms, FAQ pages (+ FAQ structured data); footer links; sitemap includes them
 - [x] SEO: dynamic metadata from branding, canonical, keywords, Google Search Console verification, WebSite JSON-LD
 - [x] Payment apply: transaction ID & screenshot optional so submitting a plan never blocks
+
+## Per-plan entitlement + branding + contact + pricing
+- [x] FIX: features are now per-plan — a user only gets the features their own plan includes (Pro no longer unlocks Max-only features); premium templates gated the same way
+- [x] Limits are per-plan (free capped; pro/max unlimited unless admin sets plan_limits.<plan>; admins unlimited)
+- [x] Branding (site name + logo) now shows in the header/footer/landing via <Brand>; contact details fields
+- [x] Contact page (/contact-us) with admin details; home + templates link to contact/support
+- [x] Home pricing section (dynamic per-plan features); dashboard Messages renamed Support and moved to bottom

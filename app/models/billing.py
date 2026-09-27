@@ -38,6 +38,11 @@ class PlatformSettings(Base):
     seo_keywords: Mapped[str | None] = mapped_column(Text)
     seo_description: Mapped[str | None] = mapped_column(Text)
     footer_text: Mapped[str | None] = mapped_column(Text)
+    contact_email: Mapped[str | None] = mapped_column(Text)
+    contact_phone: Mapped[str | None] = mapped_column(Text)
+    contact_whatsapp: Mapped[str | None] = mapped_column(Text)
+    contact_address: Mapped[str | None] = mapped_column(Text)
+    contact_note: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
 
 

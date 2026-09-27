@@ -100,8 +100,10 @@ async def update_template(
         raise AppError("Template not found or inactive.", code="not_found", status_code=404)
 
     pro_needed = (row is not None and row.plan == "pro") or (key in portfolio_service.PRO_TEMPLATES)
-    if pro_needed and not is_pro_account(account.role, account.plan):
-        raise AppError("This is a Pro template. Upgrade to use it.", code="template_locked", status_code=403)
+    if pro_needed:
+        _st = await db.get(PlatformSettings, 1)
+        if not has_feature("premium_templates", _st.plans if _st else [], account.role, account.plan):
+            raise AppError("This is a premium template. Upgrade to a plan that includes premium templates.", code="template_locked", status_code=403)
 
     portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
     portfolio = await portfolio_service.update_template(db, portfolio, key)
@@ -129,9 +131,11 @@ async def apply_custom_template(
     if tpl is None or not tpl.is_published:
         from app.core.errors import AppError
         raise AppError("Template not found", code="not_found", status_code=404)
-    if tpl.plan == "pro" and not is_pro_account(account.role, account.plan):
-        from app.core.errors import AppError
-        raise AppError("This template is Pro. Upgrade to use it.", code="template_locked", status_code=403)
+    if tpl.plan == "pro":
+        _st = await db.get(PlatformSettings, 1)
+        if not has_feature("premium_templates", _st.plans if _st else [], account.role, account.plan):
+            from app.core.errors import AppError
+            raise AppError("This is a premium template. Upgrade to a plan that includes premium templates.", code="template_locked", status_code=403)
     portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
     portfolio.template = tpl.base
     portfolio.accent = tpl.accent

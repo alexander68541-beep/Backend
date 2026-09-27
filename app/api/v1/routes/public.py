@@ -93,7 +93,7 @@ async def preview_portfolio(
     data = await public_service.get_owner_preview(db, portfolio)
     s = await db.get(PlatformSettings, 1)
     pro_features = list(s.pro_features) if s and s.pro_features else []
-    hide = has_feature("remove_branding", pro_features, account.role, account.plan) and ("remove_branding" in pro_features)
+    hide = has_feature("remove_branding", (s.plans if s else []), account.role, account.plan)
     return _serialize(data, hide_branding=hide)
 
 
@@ -238,7 +238,7 @@ async def build_snapshot(db: AsyncSession, portfolio) -> dict:
     owner = await db.get(Profile, portfolio.user_id)
     s = await db.get(PlatformSettings, 1)
     pro_features = list(s.pro_features) if s and s.pro_features else []
-    hide = bool(owner) and has_feature("remove_branding", pro_features, owner.role, owner.plan) and ("remove_branding" in pro_features)
+    hide = bool(owner) and has_feature("remove_branding", (s.plans if s else []), owner.role, owner.plan)
     return _serialize(data, hide_branding=hide).model_dump(mode="json")
 
 @router.get("/branding")
@@ -251,6 +251,11 @@ async def branding(db: AsyncSession = Depends(get_db)):
         "google_site_verification": s.google_site_verification,
         "seo_keywords": s.seo_keywords, "seo_description": getattr(s, "seo_description", None),
         "footer_text": s.footer_text,
+        "contact_email": s.contact_email, "contact_phone": s.contact_phone,
+        "contact_whatsapp": s.contact_whatsapp, "contact_address": s.contact_address,
+        "contact_note": s.contact_note,
+        "currency": s.currency,
+        "plans": [p for p in (s.plans or []) if isinstance(p, dict)],
     }
 
 
@@ -317,5 +322,5 @@ async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)
     owner = await db.get(Profile, pf.user_id)
     s = await db.get(PlatformSettings, 1)
     pro_features = list(s.pro_features) if s and s.pro_features else []
-    hide = bool(owner) and has_feature("remove_branding", pro_features, owner.role, owner.plan) and ("remove_branding" in pro_features)
+    hide = bool(owner) and has_feature("remove_branding", (s.plans if s else []), owner.role, owner.plan)
     return _serialize(data, hide_branding=hide)

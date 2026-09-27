@@ -12,13 +12,17 @@ DEFAULT_LIMITS: dict[str, dict[str, int]] = {
 
 
 def effective_plan(role: str, plan: str) -> str:
-    return "pro" if (role == "admin" or plan in ("pro", "max")) else "free"
+    if role == "admin":
+        return "__admin__"  # admins have no content limits
+    return plan or "free"
 
 
 def entity_limits(plan: str, overrides: dict | None) -> dict[str, int]:
-    base = dict(DEFAULT_LIMITS.get(plan, {}))
+    if plan == "__admin__":
+        return {}
+    base = dict(DEFAULT_LIMITS.get(plan, {}))  # 'free' is capped; pro/max unlimited unless overridden
     if overrides and isinstance(overrides, dict) and isinstance(overrides.get(plan), dict):
-        base.update({k: int(v) for k, v in overrides[plan].items()})
+        base.update({k: int(v) for k, v in overrides[plan].items() if str(v).strip() != ""})
     return base
 
 
