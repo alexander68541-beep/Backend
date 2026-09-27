@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     # App
     APP_ENV: str = "development"
+    SENTRY_DSN: str = ""  # optional; error tracking enabled only when set
     APP_URL: str = "http://localhost:3000"
     PUBLIC_PORTFOLIO_URL: str = "http://localhost:3000"
     API_URL: str = "http://localhost:8000"

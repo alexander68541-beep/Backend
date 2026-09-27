@@ -181,3 +181,7 @@ the payment (which flips the user's plan to `pro`, unlocking PRO templates).
   `folio-frontend`: make sure `package.json` has `"next": "^15.5.9"`, then
   `rm -f package-lock.json && rm -rf node_modules && npm install` to regenerate the lockfile at the
   patched version, commit **both** files, and push. Vercel blocks the vulnerable 15.1.3 (CVE-2025-66478).
+
+
+## Optional: error tracking
+Set `SENTRY_DSN` on the backend (Render env) to enable Sentry error tracking. Leave unset to disable.

@@ -39,6 +39,20 @@ def _cors_origin_regex() -> str:
         parts.append(r"([a-z0-9-]+\.)*" + re.escape(host))
     return r"^https?://(" + "|".join(parts) + r")$"
 
+
+if settings.SENTRY_DSN:
+    try:
+        import sentry_sdk
+
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            environment=settings.APP_ENV,
+            traces_sample_rate=0.1,
+            send_default_pii=False,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
 app = FastAPI(
     title="Folio API",
     version="0.1.0",

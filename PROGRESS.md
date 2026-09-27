@@ -125,3 +125,17 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 ## Phase 19 — Advanced analytics
 - [x] Privacy-safe view events (hashed visitor, referrer domain, device, country) — no PII
 - [x] Analytics: unique visitors, top referrers, device split, top countries + daily series
+
+## Phase 20 (part 1) — SEO/perf polish
+- [x] JSON-LD Person structured data on public pages (Google rich results)
+- [x] Per-portfolio favicon (avatar/OG image as tab icon)
+- [x] Public pages cached with ISR (revalidate 60s) — fast, safe with the publish snapshot
+
+## Phase 20 (part 2) — Observability
+- [x] Backend Sentry error tracking (enabled only when SENTRY_DSN is set; captures unhandled errors)
+- [x] Frontend error boundaries (error.tsx + global-error.tsx) — graceful recovery UI
+
+## Phase 21 (part 1) — Discovery / Explore
+- [x] Public /explore page: search portfolios by name, role, tagline, location, username
+- [x] Privacy-respecting: only published + public portfolios appear (unlisted/private hidden)
+- [ ] TODO: social (follow / like / collections) as a separate module

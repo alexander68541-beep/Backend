@@ -11,6 +11,14 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 logger = logging.getLogger("folio")
 
 
+def _capture(exc: Exception) -> None:
+    try:
+        import sentry_sdk
+        sentry_sdk.capture_exception(exc)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 class AppError(Exception):
     """Domain error with a machine code and a user-safe message."""
 
@@ -52,5 +60,6 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _unhandled(_: Request, exc: Exception):
+        _capture(exc)
         logger.exception("Unhandled error: %s", exc)
         return _json(500, "Something went wrong. Please try again.", code="internal_error")

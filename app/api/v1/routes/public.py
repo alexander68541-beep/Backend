@@ -241,6 +241,48 @@ async def build_snapshot(db: AsyncSession, portfolio) -> dict:
     hide = bool(owner) and has_feature("remove_branding", pro_features, owner.role, owner.plan) and ("remove_branding" in pro_features)
     return _serialize(data, hide_branding=hide).model_dump(mode="json")
 
+@router.get("/explore")
+async def explore(q: str | None = None, limit: int = 24, offset: int = 0, db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import or_, select as _select
+    from app.models import PortfolioProfile
+
+    stmt = (
+        _select(Portfolio, PortfolioProfile)
+        .join(PortfolioProfile, PortfolioProfile.portfolio_id == Portfolio.id, isouter=True)
+        .where(
+            Portfolio.status == "published",
+            Portfolio.visibility == "public",
+            Portfolio.deleted_at.is_(None),
+            Portfolio.username.isnot(None),
+        )
+    )
+    if q and q.strip():
+        like = f"%{q.strip()}%"
+        stmt = stmt.where(
+            or_(
+                PortfolioProfile.display_name.ilike(like),
+                PortfolioProfile.title.ilike(like),
+                PortfolioProfile.tagline.ilike(like),
+                PortfolioProfile.location.ilike(like),
+                Portfolio.username.ilike(like),
+            )
+        )
+    stmt = stmt.order_by(Portfolio.published_at.desc().nullslast(), Portfolio.created_at.desc()).limit(min(limit, 48)).offset(max(offset, 0))
+    rows = (await db.execute(stmt)).all()
+    out = []
+    for pf, prof in rows:
+        out.append({
+            "username": pf.username,
+            "template": pf.template,
+            "display_name": (prof.display_name if prof else None) or pf.username,
+            "title": prof.title if prof else None,
+            "tagline": prof.tagline if prof else None,
+            "location": prof.location if prof else None,
+            "avatar_url": prof.avatar_url if prof else None,
+        })
+    return out
+
+
 @router.get("/{username}", response_model=PublicPortfolioOut)
 async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)):
     data = await public_service.get_published(db, username)
