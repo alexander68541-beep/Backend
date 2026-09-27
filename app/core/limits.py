@@ -12,7 +12,7 @@ DEFAULT_LIMITS: dict[str, dict[str, int]] = {
 
 
 def effective_plan(role: str, plan: str) -> str:
-    return "pro" if (role == "admin" or plan == "pro") else "free"
+    return "pro" if (role == "admin" or plan in ("pro", "max")) else "free"
 
 
 def entity_limits(plan: str, overrides: dict | None) -> dict[str, int]:

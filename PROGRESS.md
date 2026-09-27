@@ -110,3 +110,9 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Template fallback: unknown template key safely renders Minimal (no crash)
 - [x] Admin: migrate all portfolios from one template to another (audited)
 - [ ] TODO final: draft vs published snapshot + template version numbers
+
+## Multi-tier billing (Pro / Max + periods) + font fix + admin limits
+- [x] Admin Plans catalog: tiers (Pro/Max/…), monthly/yearly/lifetime prices, advertised features
+- [x] Upgrade page: plan cards + period toggle; payment carries plan+period; approve sets that tier
+- [x] Pro & Max both unlock paid features; admin-editable free-plan limits
+- [x] Font selection now applies across the whole public page (heading included)

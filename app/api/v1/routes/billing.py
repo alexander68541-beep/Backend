@@ -31,6 +31,7 @@ async def billing_info(
         plan=account.plan,
         is_pro=is_pro_account(account.role, account.plan),
         pro_price=(s.pro_price if s else None),
+        plans=(list(s.plans) if s and s.plans else []),
         currency=(s.currency if s else None),
         payment_note=(s.payment_note if s else None),
         payment_methods=methods,
@@ -47,6 +48,8 @@ async def submit_payment(
     pr = PaymentRequest(
         user_id=account.id,
         method=payload.method,
+        plan=payload.plan,
+        period=payload.period,
         amount=payload.amount,
         tx_id=payload.tx_id,
         screenshot_url=payload.screenshot_url,

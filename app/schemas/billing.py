@@ -21,6 +21,7 @@ class BillingInfoOut(BaseModel):
     plan: str
     is_pro: bool
     pro_price: str | None = None
+    plans: list[dict] = []
     currency: str | None = None
     payment_note: str | None = None
     payment_methods: list[PaymentMethod] = []
@@ -28,6 +29,8 @@ class BillingInfoOut(BaseModel):
 
 
 class PaymentSubmitIn(BaseModel):
+    plan: str = Field(default="pro", max_length=20)
+    period: str = Field(default="lifetime", max_length=20)
     method: str = Field(min_length=1, max_length=60)
     amount: str | None = Field(default=None, max_length=40)
     tx_id: str | None = Field(default=None, max_length=200)
@@ -38,6 +41,8 @@ class PaymentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     method: str
+    plan: str = "pro"
+    period: str = "lifetime"
     amount: str | None = None
     tx_id: str | None = None
     screenshot_url: str | None = None
@@ -67,6 +72,7 @@ class SettingsOut(BaseModel):
     email_enabled: bool = True
     email_accounts: list[dict] = []
     cloudinary_accounts: list[dict] = []
+    plan_limits: dict = {}
 
 
 class SettingsUpdate(BaseModel):
@@ -85,3 +91,5 @@ class SettingsUpdate(BaseModel):
     email_enabled: bool | None = None
     email_accounts: list[dict] | None = None
     cloudinary_accounts: list[dict] | None = None
+    plan_limits: dict | None = None
+    plans: list[dict] | None = None

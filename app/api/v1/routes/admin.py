@@ -211,8 +211,8 @@ async def approve_payment(payment_id: uuid.UUID, actor: Profile = Depends(requir
     pr.status = "approved"
     user = await db.get(Profile, pr.user_id)
     if user is not None:
-        user.plan = "pro"
-        await audit.log(db, actor.email, "payment.approve", str(payment_id), {"user": user.email})
+        user.plan = pr.plan or "pro"
+        await audit.log(db, actor.email, "payment.approve", str(payment_id), {"user": user.email, "plan": pr.plan, "period": pr.period})
         from app.services.email_service import notify, send_email
         await notify(db, user.id, "billing", "Payment approved", "You're now on Pro — enjoy all premium features!")
         await db.commit()

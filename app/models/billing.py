@@ -30,6 +30,7 @@ class PlatformSettings(Base):
     email_accounts: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
     cloudinary_accounts: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
     plan_limits: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
+    plans: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
 
 
@@ -38,6 +39,8 @@ class PaymentRequest(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), index=True)
     method: Mapped[str] = mapped_column(Text, nullable=False)
+    plan: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'pro'"))
+    period: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'lifetime'"))
     amount: Mapped[str | None] = mapped_column(Text)
     tx_id: Mapped[str | None] = mapped_column(Text)
     screenshot_url: Mapped[str | None] = mapped_column(Text)

@@ -13,7 +13,7 @@ FEATURE_KEYS = {f["key"] for f in FEATURE_CATALOG}
 
 
 def is_pro_account(role: str, plan: str) -> bool:
-    return role == "admin" or plan == "pro"
+    return role == "admin" or plan in ("pro", "max")
 
 
 def has_feature(key: str, pro_features: list[str], role: str, plan: str) -> bool:
