@@ -155,16 +155,17 @@ from app.models import PlatformSettings, PaymentRequest
 from app.schemas.billing import SettingsOut, SettingsUpdate, AdminPaymentOut, PaymentMethod
 
 
-@router.get("/settings", response_model=SettingsOut)
-def _settings_out(s) -> SettingsOut:
-    """Build SettingsOut defensively so no stored value can break response validation,
-    and surface any legacy single-field email/Cloudinary config as an editable account."""
-    def _methods(raw):
-        out = []
-        for m in (raw or []):
-            if isinstance(m, dict) and m.get("name") is not None and m.get("value") is not None:
-                out.append(PaymentMethod(name=str(m["name"]), value=str(m["value"])))
-        return out
+@router.get("/settings")
+def _settings_dict(s) -> dict:
+    """Return settings as a plain JSON-safe dict (no response-model validation, so no
+    stored value can ever 422). Surfaces legacy single-field config as editable accounts."""
+    def _s(v):
+        return v if (v is None or isinstance(v, str)) else str(v)
+
+    methods = []
+    for m in (s.payment_methods or []):
+        if isinstance(m, dict) and m.get("name") is not None and m.get("value") is not None:
+            methods.append({"name": str(m["name"]), "value": str(m["value"])})
 
     ea = [a for a in (s.email_accounts or []) if isinstance(a, dict)]
     if s.email_from and s.resend_api_key and not any(a.get("from") == s.email_from for a in ea):
@@ -174,24 +175,24 @@ def _settings_out(s) -> SettingsOut:
         ca.append({"name": "default", "cloud_name": s.cloudinary_cloud_name, "api_key": s.cloudinary_api_key,
                    "api_secret": s.cloudinary_api_secret, "folder": s.cloudinary_folder or "folio", "active": True})
 
-    return SettingsOut(
-        pro_price=s.pro_price, currency=s.currency,
-        pro_features=list(s.pro_features or []),
-        payment_note=s.payment_note,
-        payment_methods=_methods(s.payment_methods),
-        cloudinary_cloud_name=s.cloudinary_cloud_name,
-        cloudinary_api_key=s.cloudinary_api_key,
-        cloudinary_folder=s.cloudinary_folder,
-        cloudinary_configured=bool(s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret),
-        email_from=s.email_from,
-        email_configured=bool(s.resend_api_key and s.email_from),
-        flags=dict(s.flags or {}),
-        email_enabled=bool(s.email_enabled),
-        email_accounts=ea,
-        cloudinary_accounts=ca,
-        plan_limits=dict(s.plan_limits or {}),
-        plans=[p for p in (s.plans or []) if isinstance(p, dict)],
-    )
+    return {
+        "pro_price": _s(s.pro_price), "currency": _s(s.currency),
+        "pro_features": [str(x) for x in (s.pro_features or [])],
+        "payment_note": _s(s.payment_note),
+        "payment_methods": methods,
+        "cloudinary_cloud_name": _s(s.cloudinary_cloud_name),
+        "cloudinary_api_key": _s(s.cloudinary_api_key),
+        "cloudinary_folder": _s(s.cloudinary_folder),
+        "cloudinary_configured": bool(s.cloudinary_cloud_name and s.cloudinary_api_key and s.cloudinary_api_secret),
+        "email_from": _s(s.email_from),
+        "email_configured": bool(s.resend_api_key and s.email_from),
+        "flags": dict(s.flags or {}),
+        "email_enabled": bool(s.email_enabled),
+        "email_accounts": ea,
+        "cloudinary_accounts": ca,
+        "plan_limits": dict(s.plan_limits or {}),
+        "plans": [p for p in (s.plans or []) if isinstance(p, dict)],
+    }
 
 
 async def get_settings(db: AsyncSession = Depends(get_db)):
@@ -201,10 +202,10 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
         db.add(s)
         await db.commit()
         await db.refresh(s)
-    return _settings_out(s)
+    return _settings_dict(s)
 
 
-@router.patch("/settings", response_model=SettingsOut)
+@router.patch("/settings")
 async def update_settings(payload: SettingsUpdate, db: AsyncSession = Depends(get_db)):
     s = await db.get(PlatformSettings, 1)
     if s is None:
@@ -214,7 +215,7 @@ async def update_settings(payload: SettingsUpdate, db: AsyncSession = Depends(ge
         setattr(s, k, v)
     await db.commit()
     await db.refresh(s)
-    return _settings_out(s)
+    return _settings_dict(s)
 
 
 @router.get("/payments", response_model=list[AdminPaymentOut])
