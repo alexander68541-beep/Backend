@@ -73,6 +73,7 @@ class SettingsOut(BaseModel):
     email_accounts: list[dict] = []
     cloudinary_accounts: list[dict] = []
     plan_limits: dict = {}
+    plans: list[dict] = []
 
 
 class SettingsUpdate(BaseModel):
