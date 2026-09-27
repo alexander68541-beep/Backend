@@ -121,3 +121,7 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Publishing snapshots the portfolio; public page serves the last published version
 - [x] Owner edits are a draft (Preview draft); 'Publish changes' updates the public snapshot
 - [x] Upgrade page: only admin-configured periods shown, auto-default; single plan auto-selected
+
+## Phase 19 — Advanced analytics
+- [x] Privacy-safe view events (hashed visitor, referrer domain, device, country) — no PII
+- [x] Analytics: unique visitors, top referrers, device split, top countries + daily series

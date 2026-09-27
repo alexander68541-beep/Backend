@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Body, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -116,11 +116,13 @@ async def list_published_usernames(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/{username}/view")
-async def track_view(username: str, db: AsyncSession = Depends(get_db)):
+async def track_view(username: str, request: Request, payload: dict | None = Body(default=None), db: AsyncSession = Depends(get_db)):
+    import hashlib
     from datetime import date
+    from urllib.parse import urlparse
     from sqlalchemy import select as _select, func as _func
     from sqlalchemy.dialects.postgresql import insert as _pg_insert
-    from app.models import ViewDaily
+    from app.models import ViewDaily, ViewEvent
     from app.utils.username import normalize_username
 
     row = (
@@ -134,10 +136,28 @@ async def track_view(username: str, db: AsyncSession = Depends(get_db)):
     ).first()
     if row is None:
         return {"ok": False}
-    stmt = _pg_insert(ViewDaily).values(portfolio_id=row[0], day=date.today(), count=1)
-    stmt = stmt.on_conflict_do_update(
-        index_elements=["portfolio_id", "day"],
-        set_={"count": ViewDaily.count + 1},
+    pid = row[0]
+    today = date.today()
+
+    ua = (request.headers.get("user-agent") or "")
+    device = "mobile" if ("Mobi" in ua or "iPhone" in ua or "Android" in ua) else "desktop"
+    country = request.headers.get("cf-ipcountry") or None
+    if country in ("XX", "T1", ""):
+        country = None
+    ip = request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "")
+    visitor_hash = hashlib.sha256(f"{ip}|{today}|folio-salt".encode()).hexdigest()[:32] if ip else None
+
+    ref = None
+    raw = (payload or {}).get("referrer") if isinstance(payload, dict) else None
+    if raw:
+        try:
+            ref = urlparse(raw).hostname or None
+        except Exception:
+            ref = None
+
+    db.add(ViewEvent(portfolio_id=pid, day=today, visitor_hash=visitor_hash, referrer=ref, device=device, country=country))
+    stmt = _pg_insert(ViewDaily).values(portfolio_id=pid, day=today, count=1).on_conflict_do_update(
+        index_elements=["portfolio_id", "day"], set_={"count": ViewDaily.count + 1},
     )
     await db.execute(stmt)
     await db.commit()

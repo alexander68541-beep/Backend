@@ -186,7 +186,29 @@ async def get_analytics(
         )
     ).scalar_one()
     last7 = sum(s["count"] for s in series[-7:])
-    return {"series": series, "total": int(total), "today": int(by_day.get(today, 0)), "last7": int(last7)}
+
+    # advanced breakdowns from view_events (privacy-safe; no PII stored)
+    from collections import Counter
+    from app.models import ViewEvent
+    evs = (
+        await db.execute(
+            _select(ViewEvent.visitor_hash, ViewEvent.referrer, ViewEvent.device, ViewEvent.country).where(
+                ViewEvent.portfolio_id == portfolio.id, ViewEvent.day >= start
+            )
+        )
+    ).all()
+    unique = len({e[0] for e in evs if e[0]})
+    ref_c = Counter(e[1] for e in evs if e[1])
+    dev_c = Counter(e[2] for e in evs if e[2])
+    ctry_c = Counter(e[3] for e in evs if e[3])
+    referrers = [{"name": k, "count": v} for k, v in ref_c.most_common(8)]
+    devices = [{"name": k, "count": v} for k, v in dev_c.most_common()]
+    countries = [{"name": k, "count": v} for k, v in ctry_c.most_common(8)]
+
+    return {
+        "series": series, "total": int(total), "today": int(by_day.get(today, 0)), "last7": int(last7),
+        "unique": int(unique), "referrers": referrers, "devices": devices, "countries": countries,
+    }
 
 
 @router.patch("/visibility", response_model=PortfolioOut)
