@@ -318,7 +318,13 @@ async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)
     data = await public_service.get_published(db, username)
     pf = data["portfolio"]
     if pf.published_data:
-        return pf.published_data  # serve the last published snapshot
+        # override the branding flag live from the owner's CURRENT plan (snapshot may be stale)
+        owner = await db.get(Profile, pf.user_id)
+        s = await db.get(PlatformSettings, 1)
+        hide = bool(owner) and has_feature("remove_branding", (s.plans if s else []), owner.role, owner.plan)
+        data = dict(pf.published_data)
+        data["hide_branding"] = hide  # live branding
+        return data
     owner = await db.get(Profile, pf.user_id)
     s = await db.get(PlatformSettings, 1)
     pro_features = list(s.pro_features) if s and s.pro_features else []

@@ -171,3 +171,10 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Branding (site name + logo) now shows in the header/footer/landing via <Brand>; contact details fields
 - [x] Contact page (/contact-us) with admin details; home + templates link to contact/support
 - [x] Home pricing section (dynamic per-plan features); dashboard Messages renamed Support and moved to bottom
+
+## Entitlement + branding polish + public pricing
+- [x] Analytics now gated by plan (locked upgrade card if the plan doesn't include it)
+- [x] Remove-branding computed LIVE from the owner's current plan (no stale snapshot)
+- [x] Site name/logo now shows in the dashboard sidebar too (<Brand> everywhere)
+- [x] Public /pricing page (dynamic per-plan features); Pricing/Contact links in header & footer
+- [x] Custom accent already per-plan gated; billing/info features.has is per-plan
