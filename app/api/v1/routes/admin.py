@@ -155,7 +155,6 @@ from app.models import PlatformSettings, PaymentRequest
 from app.schemas.billing import SettingsOut, SettingsUpdate, AdminPaymentOut, PaymentMethod
 
 
-@router.get("/settings")
 def _settings_dict(s) -> dict:
     """Return settings as a plain JSON-safe dict (no response-model validation, so no
     stored value can ever 422). Surfaces legacy single-field config as editable accounts."""
@@ -195,6 +194,7 @@ def _settings_dict(s) -> dict:
     }
 
 
+@router.get("/settings")
 async def get_settings(db: AsyncSession = Depends(get_db)):
     import logging
     try:
