@@ -51,3 +51,5 @@ alter table public.custom_templates add column if not exists preview_url text;
 
 -- ensure the singleton settings row exists
 insert into public.platform_settings (id) values (1) on conflict (id) do nothing;
+
+alter table public.profiles add column if not exists plan_expires_at timestamptz;

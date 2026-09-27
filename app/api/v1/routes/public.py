@@ -175,7 +175,7 @@ async def contact(request: Request, username: str, payload: ContactIn, db: Async
         return {"ok": False, "disabled": True}
     from sqlalchemy import func as _func, select as _select
     from app.utils.username import normalize_username
-    from app.services.email_service import notify, send_email
+    from app.services.email_service import notify, send_email, email_html
 
     row = (
         await db.execute(
@@ -197,12 +197,12 @@ async def contact(request: Request, username: str, payload: ContactIn, db: Async
 
     owner = await db.get(Profile, row.user_id)
     if owner and owner.email:
-        html = (
-            "<p>You received a new message on your Folio portfolio.</p>"
-            f"<p><b>From:</b> {payload.name or ''} ({payload.email or ''})</p>"
-            f"<p>{payload.message}</p>"
+        body = (
+            f"<p><b>From:</b> {payload.name or 'Someone'} ({payload.email or 'no email'})</p>"
+            f"<p style='background:#1a1b28;border-radius:10px;padding:14px'>{payload.message}</p>"
         )
-        await send_email(db, owner.email, "New message on your Folio portfolio", html)
+        html = await email_html(db, "New message on your portfolio", body)
+        await send_email(db, owner.email, "New message on your portfolio", html)
     return {"ok": True}
 
 

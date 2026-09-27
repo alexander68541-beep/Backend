@@ -185,3 +185,10 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Pricing page shows monthly/yearly/lifetime prices + per-plan item limits + features
 - [x] /docs documentation page (how it works, plans, features) + in header/footer/sitemap
 - [x] Footer links horizontal (landscape)
+
+## Subscription expiry + branded email + pricing polish
+- [x] Timed plans expire: approve sets plan_expires_at (monthly +30d, yearly +365d, lifetime none)
+- [x] Auto-downgrade to Free on expiry (enforced on every authenticated request)
+- [x] Billing shows expiry date + days remaining (or 'Lifetime — never expires')
+- [x] Pricing: monthly/yearly/lifetime toggle changes all prices; ALL section limits shown
+- [x] Transactional emails use a branded, website-styled template (name/logo from DB)

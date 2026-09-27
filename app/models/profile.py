@@ -1,6 +1,7 @@
+from datetime import datetime
 import uuid
 
-from sqlalchemy import String, text
+from sqlalchemy import DateTime, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -19,3 +20,4 @@ class Profile(Base, TimestampMixin):
         String(32), nullable=False, server_default=text("'user'")
     )
     plan: Mapped[str] = mapped_column(String(16), nullable=False, server_default=text("'free'"))
+    plan_expires_at: Mapped["datetime | None"] = mapped_column(DateTime(timezone=True), nullable=True)

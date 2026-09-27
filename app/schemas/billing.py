@@ -18,6 +18,7 @@ class FeatureOut(BaseModel):
 
 
 class BillingInfoOut(BaseModel):
+    plan_expires_at: str | None = None
     plan: str
     is_pro: bool
     pro_price: str | None = None

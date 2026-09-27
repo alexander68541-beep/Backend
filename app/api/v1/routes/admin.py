@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_admin
 from app.services import audit
+from app.core.config import settings
 from app.db.session import get_db
 from app.models import Portfolio, Profile
 
@@ -262,13 +263,22 @@ async def approve_payment(payment_id: uuid.UUID, actor: Profile = Depends(requir
     user = await db.get(Profile, pr.user_id)
     if user is not None:
         user.plan = pr.plan or "pro"
+        from datetime import datetime, timezone, timedelta
+        if pr.period == "monthly":
+            user.plan_expires_at = datetime.now(timezone.utc) + timedelta(days=30)
+        elif pr.period == "yearly":
+            user.plan_expires_at = datetime.now(timezone.utc) + timedelta(days=365)
+        else:
+            user.plan_expires_at = None  # lifetime = no expiry
         await audit.log(db, actor.email, "payment.approve", str(payment_id), {"user": user.email, "plan": pr.plan, "period": pr.period})
-        from app.services.email_service import notify, send_email
+        from app.services.email_service import notify, send_email, email_html
         await notify(db, user.id, "billing", "Payment approved", "You're now on Pro — enjoy all premium features!")
         await db.commit()
         if user.email:
-            await send_email(db, user.email, "Your Folio payment was approved",
-                             "<p>Your payment has been approved. Your account is now <b>Pro</b> — all premium features are unlocked.</p>")
+            _plan = (pr.plan or "pro").capitalize()
+            _body = f"<p>Your payment has been approved. Your account is now <b>{_plan}</b> — enjoy your unlocked features!</p>"
+            _html = await email_html(db, "Payment approved 🎉", _body, cta_text="Open dashboard", cta_url=(settings.APP_URL.rstrip('/') + '/dashboard' if settings.APP_URL else None))
+            await send_email(db, user.email, "Your payment was approved", _html)
     else:
         await db.commit()
     return {"ok": True}

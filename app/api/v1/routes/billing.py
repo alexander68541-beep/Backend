@@ -32,6 +32,7 @@ async def billing_info(
         is_pro=is_pro_account(account.role, account.plan),
         pro_price=(s.pro_price if s else None),
         plans=(list(s.plans) if s and s.plans else []),
+        plan_expires_at=(account.plan_expires_at.isoformat() if getattr(account, 'plan_expires_at', None) else None),
         currency=(s.currency if s else None),
         payment_note=(s.payment_note if s else None),
         payment_methods=methods,

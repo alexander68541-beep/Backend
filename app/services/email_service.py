@@ -67,3 +67,36 @@ async def send_email(db: AsyncSession, to: str | None, subject: str, html: str) 
 async def notify(db: AsyncSession, user_id, ntype: str, title: str, body: str | None = None):
     from app.models import Notification
     db.add(Notification(user_id=user_id, type=ntype, title=title, body=body))
+
+
+async def email_html(db: AsyncSession, heading: str, body_html: str, cta_text: str | None = None, cta_url: str | None = None) -> str:
+    """Wrap content in a branded, website-styled HTML email using DB branding."""
+    from app.models import PlatformSettings
+    s = await db.get(PlatformSettings, 1)
+    site = (s.site_name if s and s.site_name else "Folio")
+    logo = (s.logo_url if s and s.logo_url else None)
+    footer = (s.footer_text if s and s.footer_text else f"© {site}")
+    brand = (
+        f'<img src="{logo}" alt="{site}" style="height:34px">' if logo
+        else f'<span style="font-size:22px;font-weight:800;background:linear-gradient(90deg,#7c6cff,#38d2c6);-webkit-background-clip:text;background-clip:text;color:#7c6cff">{site}</span>'
+    )
+    cta = ""
+    if cta_text and cta_url:
+        cta = (
+            f'<tr><td style="padding:8px 0 4px"><a href="{cta_url}" '
+            'style="display:inline-block;background:linear-gradient(90deg,#7c6cff,#38d2c6);color:#fff;'
+            'text-decoration:none;font-weight:700;padding:12px 26px;border-radius:10px">'
+            f'{cta_text}</a></td></tr>'
+        )
+    return f"""\
+<!doctype html><html><body style="margin:0;background:#0a0b12;padding:28px 12px;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#12131c;border:1px solid #23243a;border-radius:16px;overflow:hidden">
+    <tr><td style="padding:22px 28px;border-bottom:1px solid #23243a">{brand}</td></tr>
+    <tr><td style="padding:28px">
+      <h1 style="margin:0 0 14px;color:#f2f2f7;font-size:20px">{heading}</h1>
+      <div style="color:#c7c7d4;font-size:15px;line-height:1.65">{body_html}</div>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:18px">{cta}</table>
+    </td></tr>
+    <tr><td style="padding:18px 28px;border-top:1px solid #23243a;color:#7a7a90;font-size:12px">{footer}</td></tr>
+  </table>
+</body></html>"""
