@@ -55,7 +55,7 @@ def make_crud_router(*, prefix, tag, model, create_schema, update_schema, out_sc
     router = APIRouter(prefix=prefix, tags=[tag])
 
     async def _pid(user: CurrentUser, db: AsyncSession) -> uuid.UUID:
-        pf = await portfolio_service.ensure_primary_portfolio(db, user.id)
+        pf = await portfolio_service.ensure_primary_portfolio(db, str(user.id))
         return pf.id
 
     @router.get("", response_model=list[out_schema])
