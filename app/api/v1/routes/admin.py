@@ -422,3 +422,22 @@ async def test_email(actor: Profile = Depends(require_admin), db: AsyncSession =
 
     ok, detail = await anyio.to_thread.run_sync(_do)
     return {"ok": ok, "detail": detail, "to": actor.email, "from": frm}
+
+
+from pydantic import BaseModel as _BaseModel
+
+
+class TemplateMigrateIn(_BaseModel):
+    from_key: str
+    to_key: str
+
+
+@router.post("/templates/migrate")
+async def migrate_templates(payload: TemplateMigrateIn, actor: Profile = Depends(require_admin), db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import update as _update
+    res = await db.execute(
+        _update(Portfolio).where(Portfolio.template == payload.from_key).values(template=payload.to_key)
+    )
+    await audit.log(db, actor.email, "template.migrate", None, {"from": payload.from_key, "to": payload.to_key})
+    await db.commit()
+    return {"ok": True, "migrated": res.rowcount}

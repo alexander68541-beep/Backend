@@ -104,3 +104,9 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Per-portfolio settings (JSONB): font choice + hidden sections
 - [x] Customize page: pick a font, show/hide sections; applied on public pages
 - [ ] TODO next: section ordering (drag), draft/publish snapshot, template versioning + admin migrate
+
+## Phase 18 (part 2) — Section order + template fallback + admin migrate
+- [x] Section ordering: reorder sections on the public page (Customize ↑/↓, applied via data-sec)
+- [x] Template fallback: unknown template key safely renders Minimal (no crash)
+- [x] Admin: migrate all portfolios from one template to another (audited)
+- [ ] TODO final: draft vs published snapshot + template version numbers
