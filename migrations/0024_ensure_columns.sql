@@ -20,6 +20,13 @@ alter table public.platform_settings add column if not exists email_accounts jso
 alter table public.platform_settings add column if not exists cloudinary_accounts jsonb not null default '[]';
 alter table public.platform_settings add column if not exists plan_limits jsonb not null default '{}';
 alter table public.platform_settings add column if not exists plans jsonb not null default '[]';
+alter table public.platform_settings add column if not exists site_name text;
+alter table public.platform_settings add column if not exists logo_url text;
+alter table public.platform_settings add column if not exists favicon_url text;
+alter table public.platform_settings add column if not exists google_site_verification text;
+alter table public.platform_settings add column if not exists seo_keywords text;
+alter table public.platform_settings add column if not exists seo_description text;
+alter table public.platform_settings add column if not exists footer_text text;
 
 -- portfolios
 alter table public.portfolios add column if not exists seo_title text;

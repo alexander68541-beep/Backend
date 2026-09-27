@@ -144,3 +144,23 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Like a portfolio (public count; toggle when signed in) via a floating social bar
 - [x] Save/bookmark portfolios; 'Saved' dashboard page lists them
 - [x] Separate social module — never touches core portfolio data
+
+## Social fix + Phase 22 (part 1)
+- [x] Like/Save auth routing fixed: subdomain viewers are sent to the main-domain page (where their session works) instead of a 404 /login on the subdomain
+- [x] Respect prefers-reduced-motion (accessibility / low-power devices)
+
+## Like/save removed + Phase 22 (part 2)
+- [x] Removed like/save social bar (kept subdomain URLs and Explore discovery)
+- [x] Autosave: profile editors keep an unsaved draft in localStorage (restore after refresh/crash, discard, cleared on save)
+
+## Phase 22 (part 3) — i18n
+- [x] Multi-language foundation (English + Bengali): LanguageProvider + useT() + dictionary, saved in localStorage
+- [x] Language switcher in dashboard; nav + common actions translated (extendable to all strings)
+- [note] Cron/queue skipped — not needed (analytics aggregate on query; no heavy jobs)
+
+## Branding + legal pages + SEO + payment fix (i18n removed)
+- [x] Removed Bengali/i18n (English-only, stable)
+- [x] Admin-controlled branding: site name, logo, favicon, SEO description/keywords, Google verification, footer
+- [x] Privacy, Terms, FAQ pages (+ FAQ structured data); footer links; sitemap includes them
+- [x] SEO: dynamic metadata from branding, canonical, keywords, Google Search Console verification, WebSite JSON-LD
+- [x] Payment apply: transaction ID & screenshot optional so submitting a plan never blocks

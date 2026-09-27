@@ -94,3 +94,10 @@ class SettingsUpdate(BaseModel):
     cloudinary_accounts: list[dict] | None = None
     plan_limits: dict | None = None
     plans: list[dict] | None = None
+    site_name: str | None = None
+    logo_url: str | None = None
+    favicon_url: str | None = None
+    google_site_verification: str | None = None
+    seo_keywords: str | None = None
+    seo_description: str | None = None
+    footer_text: str | None = None

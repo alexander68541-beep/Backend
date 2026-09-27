@@ -31,6 +31,13 @@ class PlatformSettings(Base):
     cloudinary_accounts: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
     plan_limits: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
     plans: Mapped[list] = mapped_column(JSONB, nullable=False, server_default=text("'[]'"))
+    site_name: Mapped[str | None] = mapped_column(Text)
+    logo_url: Mapped[str | None] = mapped_column(Text)
+    favicon_url: Mapped[str | None] = mapped_column(Text)
+    google_site_verification: Mapped[str | None] = mapped_column(Text)
+    seo_keywords: Mapped[str | None] = mapped_column(Text)
+    seo_description: Mapped[str | None] = mapped_column(Text)
+    footer_text: Mapped[str | None] = mapped_column(Text)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=text("now()"), nullable=False)
 
 

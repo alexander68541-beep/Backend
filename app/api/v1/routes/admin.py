@@ -191,6 +191,9 @@ def _settings_dict(s) -> dict:
         "cloudinary_accounts": ca,
         "plan_limits": dict(s.plan_limits or {}),
         "plans": [p for p in (s.plans or []) if isinstance(p, dict)],
+        "site_name": _s(s.site_name), "logo_url": _s(s.logo_url), "favicon_url": _s(s.favicon_url),
+        "google_site_verification": _s(s.google_site_verification), "seo_keywords": _s(s.seo_keywords),
+        "seo_description": _s(getattr(s, "seo_description", None)), "footer_text": _s(s.footer_text),
     }
 
 
@@ -212,7 +215,7 @@ async def get_settings(db: AsyncSession = Depends(get_db)):
             "payment_methods": [], "cloudinary_cloud_name": None, "cloudinary_api_key": None,
             "cloudinary_folder": None, "cloudinary_configured": False, "email_from": None,
             "email_configured": False, "flags": {}, "email_enabled": True, "email_accounts": [],
-            "cloudinary_accounts": [], "plan_limits": {}, "plans": [], "_error": str(e)[:200],
+            "cloudinary_accounts": [], "plan_limits": {}, "plans": [], "site_name": None, "logo_url": None, "favicon_url": None, "google_site_verification": None, "seo_keywords": None, "seo_description": None, "footer_text": None, "_error": str(e)[:200],
         }
 
 

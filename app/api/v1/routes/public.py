@@ -241,6 +241,19 @@ async def build_snapshot(db: AsyncSession, portfolio) -> dict:
     hide = bool(owner) and has_feature("remove_branding", pro_features, owner.role, owner.plan) and ("remove_branding" in pro_features)
     return _serialize(data, hide_branding=hide).model_dump(mode="json")
 
+@router.get("/branding")
+async def branding(db: AsyncSession = Depends(get_db)):
+    s = await db.get(PlatformSettings, 1)
+    if s is None:
+        return {}
+    return {
+        "site_name": s.site_name, "logo_url": s.logo_url, "favicon_url": s.favicon_url,
+        "google_site_verification": s.google_site_verification,
+        "seo_keywords": s.seo_keywords, "seo_description": getattr(s, "seo_description", None),
+        "footer_text": s.footer_text,
+    }
+
+
 @router.get("/explore")
 async def explore(q: str | None = None, limit: int = 24, offset: int = 0, db: AsyncSession = Depends(get_db)):
     from sqlalchemy import or_, select as _select
