@@ -210,10 +210,23 @@ async def report_portfolio(request: Request, username: str, payload: dict, db: A
     return {"ok": True}
 
 
+
+
+async def build_snapshot(db: AsyncSession, portfolio) -> dict:
+    """Serialize the current live data into a snapshot dict for publishing."""
+    data = await public_service.get_owner_preview(db, portfolio)
+    owner = await db.get(Profile, portfolio.user_id)
+    s = await db.get(PlatformSettings, 1)
+    pro_features = list(s.pro_features) if s and s.pro_features else []
+    hide = bool(owner) and has_feature("remove_branding", pro_features, owner.role, owner.plan) and ("remove_branding" in pro_features)
+    return _serialize(data, hide_branding=hide).model_dump(mode="json")
+
 @router.get("/{username}", response_model=PublicPortfolioOut)
 async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)):
     data = await public_service.get_published(db, username)
     pf = data["portfolio"]
+    if pf.published_data:
+        return pf.published_data  # serve the last published snapshot
     owner = await db.get(Profile, pf.user_id)
     s = await db.get(PlatformSettings, 1)
     pro_features = list(s.pro_features) if s and s.pro_features else []

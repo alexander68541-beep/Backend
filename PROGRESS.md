@@ -116,3 +116,8 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Upgrade page: plan cards + period toggle; payment carries plan+period; approve sets that tier
 - [x] Pro & Max both unlock paid features; admin-editable free-plan limits
 - [x] Font selection now applies across the whole public page (heading included)
+
+## Phase 18 final — Draft vs Published + upgrade page
+- [x] Publishing snapshots the portfolio; public page serves the last published version
+- [x] Owner edits are a draft (Preview draft); 'Publish changes' updates the public snapshot
+- [x] Upgrade page: only admin-configured periods shown, auto-default; single plan auto-selected

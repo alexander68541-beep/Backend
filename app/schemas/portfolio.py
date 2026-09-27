@@ -52,6 +52,7 @@ class PortfolioOut(BaseModel):
     seo_description: str | None = None
     seo_image: str | None = None
     settings: dict = {}
+    published_at: datetime | None = None
     is_primary: bool
     username_change_count: int
     username_changed_at: datetime | None = None
