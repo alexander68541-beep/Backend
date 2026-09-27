@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.routes import account, admin, billing, messages as messages_routes, inbox as inbox_routes, templates as templates_routes, health, media, portfolio, portfolio_data, public, username
+from app.api.v1.routes import account, admin, billing, messages as messages_routes, inbox as inbox_routes, social as social_routes, templates as templates_routes, health, media, portfolio, portfolio_data, public, username
 
 api_router = APIRouter()
 api_router.include_router(health.router)
@@ -14,5 +14,6 @@ api_router.include_router(billing.router)
 api_router.include_router(templates_routes.router)
 api_router.include_router(messages_routes.router)
 api_router.include_router(inbox_routes.router)
+api_router.include_router(social_routes.router)
 for r in portfolio_data.all_routers:
     api_router.include_router(r)

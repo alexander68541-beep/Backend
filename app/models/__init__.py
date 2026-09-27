@@ -5,6 +5,7 @@ from app.models.billing import PlatformSettings, PaymentRequest
 from app.models.extras import CustomTemplate, Message
 from app.models.analytics import ViewDaily
 from app.models.view_event import ViewEvent
+from app.models.social import PortfolioLike, PortfolioSave
 from app.models.inbox import ContactSubmission, Notification
 from app.models.moderation import AuditLog, Report
 from app.models.media import Media

@@ -139,3 +139,8 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Public /explore page: search portfolios by name, role, tagline, location, username
 - [x] Privacy-respecting: only published + public portfolios appear (unlisted/private hidden)
 - [ ] TODO: social (follow / like / collections) as a separate module
+
+## Phase 21 (part 2) — Social (likes + saves)
+- [x] Like a portfolio (public count; toggle when signed in) via a floating social bar
+- [x] Save/bookmark portfolios; 'Saved' dashboard page lists them
+- [x] Separate social module — never touches core portfolio data

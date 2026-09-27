@@ -283,6 +283,18 @@ async def explore(q: str | None = None, limit: int = 24, offset: int = 0, db: As
     return out
 
 
+@router.get("/{username}/social")
+async def social_counts(username: str, db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import func as _func, select as _select
+    from app.models import PortfolioLike
+    from app.utils.username import normalize_username
+    row = (await db.execute(_select(Portfolio.id).where(_func.lower(Portfolio.username) == normalize_username(username), Portfolio.status == "published"))).first()
+    if not row:
+        return {"likes": 0}
+    likes = (await db.execute(_select(_func.count()).select_from(PortfolioLike).where(PortfolioLike.portfolio_id == row[0]))).scalar_one()
+    return {"likes": int(likes)}
+
+
 @router.get("/{username}", response_model=PublicPortfolioOut)
 async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)):
     data = await public_service.get_published(db, username)
