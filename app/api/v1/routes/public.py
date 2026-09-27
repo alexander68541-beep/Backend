@@ -41,6 +41,7 @@ class PublicPortfolioOut(BaseModel):
     seo_title: str | None = None
     seo_description: str | None = None
     seo_image: str | None = None
+    settings: dict = {}
     profile: PortfolioProfileOut | None = None
     projects: list[ProjectOut] = []
     skills: list[SkillOut] = []
@@ -66,6 +67,7 @@ def _serialize(data, hide_branding: bool = False) -> "PublicPortfolioOut":
         seo_title=pf.seo_title,
         seo_description=pf.seo_description,
         seo_image=pf.seo_image,
+        settings=(pf.settings or {}),
         profile=PortfolioProfileOut.model_validate(data["profile"]) if data["profile"] else None,
         projects=[ProjectOut.model_validate(x) for x in data["projects"]],
         skills=[SkillOut.model_validate(x) for x in data["skills"]],

@@ -15,6 +15,7 @@ from app.schemas.portfolio import (
     StatusUpdateIn,
     AccentUpdateIn,
     SeoUpdateIn,
+    TemplateSettingsIn,
     VisibilityIn,
     TemplateUpdateIn,
     UsernameSetIn,
@@ -229,3 +230,18 @@ async def export_portfolio(account: Profile = Depends(get_current_account), db: 
         "gallery": _dump(data["gallery"], ["image_url","caption"]),
         "videos": _dump(data["videos"], ["title","url"]),
     }
+
+
+@router.patch("/settings", response_model=PortfolioOut)
+async def update_template_settings(
+    payload: TemplateSettingsIn,
+    account: Profile = Depends(get_current_account),
+    db: AsyncSession = Depends(get_db),
+) -> PortfolioOut:
+    portfolio = await portfolio_service.ensure_primary_portfolio(db, str(account.id))
+    cur = dict(portfolio.settings or {})
+    cur.update(payload.model_dump(exclude_unset=True))
+    portfolio.settings = cur  # reassign so JSONB change is tracked
+    await db.commit()
+    await db.refresh(portfolio)
+    return PortfolioOut.model_validate(portfolio)

@@ -99,3 +99,8 @@ Stack: Next.js (Vercel) + FastAPI (Render) + Supabase (Auth + Postgres + RLS) + 
 - [x] Data export: full portfolio JSON download
 - [x] Privacy: public / unlisted / private (private hidden, only public in sitemap)
 - [x] Sessions: sign out this device / all devices (global)
+
+## Phase 18 (part 1) — Template settings: font + section visibility
+- [x] Per-portfolio settings (JSONB): font choice + hidden sections
+- [x] Customize page: pick a font, show/hide sections; applied on public pages
+- [ ] TODO next: section ordering (drag), draft/publish snapshot, template versioning + admin migrate

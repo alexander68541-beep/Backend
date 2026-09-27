@@ -51,6 +51,7 @@ class PortfolioOut(BaseModel):
     seo_title: str | None = None
     seo_description: str | None = None
     seo_image: str | None = None
+    settings: dict = {}
     is_primary: bool
     username_change_count: int
     username_changed_at: datetime | None = None
@@ -81,3 +82,9 @@ class SeoUpdateIn(BaseModel):
 
 class VisibilityIn(BaseModel):
     visibility: str = Field(pattern=r"^(public|unlisted|private)$")
+
+
+class TemplateSettingsIn(BaseModel):
+    font: str | None = Field(default=None, max_length=40)
+    hidden: list[str] | None = None
+    section_order: list[str] | None = None
