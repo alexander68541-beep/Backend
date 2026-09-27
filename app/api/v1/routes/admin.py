@@ -196,13 +196,24 @@ def _settings_dict(s) -> dict:
 
 
 async def get_settings(db: AsyncSession = Depends(get_db)):
-    s = await db.get(PlatformSettings, 1)
-    if s is None:
-        s = PlatformSettings(id=1)
-        db.add(s)
-        await db.commit()
-        await db.refresh(s)
-    return _settings_dict(s)
+    import logging
+    try:
+        s = await db.get(PlatformSettings, 1)
+        if s is None:
+            s = PlatformSettings(id=1)
+            db.add(s)
+            await db.commit()
+            await db.refresh(s)
+        return _settings_dict(s)
+    except Exception as e:  # noqa: BLE001
+        logging.getLogger("folio").exception("get_settings failed: %s", e)
+        return {
+            "pro_price": None, "currency": None, "pro_features": [], "payment_note": None,
+            "payment_methods": [], "cloudinary_cloud_name": None, "cloudinary_api_key": None,
+            "cloudinary_folder": None, "cloudinary_configured": False, "email_from": None,
+            "email_configured": False, "flags": {}, "email_enabled": True, "email_accounts": [],
+            "cloudinary_accounts": [], "plan_limits": {}, "plans": [], "_error": str(e)[:200],
+        }
 
 
 @router.patch("/settings")

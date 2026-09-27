@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -38,8 +38,17 @@ def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
     async def _validation_error(_: Request, exc: RequestValidationError):
         first = exc.errors()[0] if exc.errors() else {}
-        msg = first.get("msg", "Invalid request")
+        loc = ".".join(str(x) for x in first.get("loc", []))
+        msg = f"{loc}: {first.get('msg', 'Invalid request')}" if loc else first.get("msg", "Invalid request")
         return _json(422, msg, code="validation_error")
+
+    @app.exception_handler(ResponseValidationError)
+    async def _response_validation_error(_: Request, exc: ResponseValidationError):
+        errs = exc.errors() if hasattr(exc, "errors") else []
+        first = errs[0] if errs else {}
+        loc = ".".join(str(x) for x in first.get("loc", []))
+        logger.exception("Response validation error at %s: %s", loc, first.get("msg"))
+        return _json(500, f"response:{loc}: {first.get('msg', 'invalid')}", code="response_error")
 
     @app.exception_handler(Exception)
     async def _unhandled(_: Request, exc: Exception):
