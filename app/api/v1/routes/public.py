@@ -250,6 +250,14 @@ def _plan_limits_map(s) -> dict:
     return out
 
 
+@router.get("/resolve-domain")
+async def resolve_domain(host: str, db: AsyncSession = Depends(get_db)):
+    from app.models import Domain
+    from sqlalchemy import func as _func, select as _select
+    row = (await db.execute(_select(Domain.username).where(_func.lower(Domain.domain) == host.strip().lower(), Domain.verified == True))).first()  # noqa: E712
+    return {"username": row[0] if row and row[0] else None}
+
+
 @router.get("/branding")
 async def branding(db: AsyncSession = Depends(get_db)):
     s = await db.get(PlatformSettings, 1)
@@ -323,20 +331,35 @@ async def social_counts(username: str, db: AsyncSession = Depends(get_db)):
     return {"likes": int(likes)}
 
 
-@router.get("/{username}", response_model=PublicPortfolioOut)
+async def _full_public_dict(db: AsyncSession, pf, data) -> dict:
+    owner = await db.get(Profile, pf.user_id)
+    s = await db.get(PlatformSettings, 1)
+    hide = bool(owner) and has_feature("remove_branding", (s.plans if s else []), owner.role, owner.plan)
+    if pf.published_data:
+        d = dict(pf.published_data)
+        d["hide_branding"] = hide  # live branding
+        return d
+    return _serialize(data, hide_branding=hide).model_dump(mode="json")
+
+
+@router.get("/{username}")
 async def get_public_portfolio(username: str, db: AsyncSession = Depends(get_db)):
     data = await public_service.get_published(db, username)
     pf = data["portfolio"]
-    if pf.published_data:
-        # override the branding flag live from the owner's CURRENT plan (snapshot may be stale)
-        owner = await db.get(Profile, pf.user_id)
-        s = await db.get(PlatformSettings, 1)
-        hide = bool(owner) and has_feature("remove_branding", (s.plans if s else []), owner.role, owner.plan)
-        data = dict(pf.published_data)
-        data["hide_branding"] = hide  # live branding
-        return data
-    owner = await db.get(Profile, pf.user_id)
-    s = await db.get(PlatformSettings, 1)
-    pro_features = list(s.pro_features) if s and s.pro_features else []
-    hide = bool(owner) and has_feature("remove_branding", (s.plans if s else []), owner.role, owner.plan)
-    return _serialize(data, hide_branding=hide)
+    if pf.access_password:
+        prof = data.get("profile")
+        return {"protected": True, "username": pf.username,
+                "display_name": (getattr(prof, "display_name", None) or pf.username)}
+    return await _full_public_dict(db, pf, data)
+
+
+@router.post("/{username}/unlock")
+async def unlock_portfolio(username: str, payload: dict, db: AsyncSession = Depends(get_db)):
+    from fastapi import HTTPException as _HTTPException
+    data = await public_service.get_published(db, username)
+    pf = data["portfolio"]
+    if pf.access_password:
+        pw = (payload or {}).get("password", "") if isinstance(payload, dict) else ""
+        if pw != pf.access_password:
+            raise _HTTPException(status_code=401, detail="Incorrect password")
+    return await _full_public_dict(db, pf, data)

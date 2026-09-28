@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     # App
     APP_ENV: str = "development"
     SENTRY_DSN: str = ""  # optional; error tracking enabled only when set
+    # Custom domains via Vercel (optional)
+    VERCEL_TOKEN: str = ""
+    VERCEL_PROJECT_ID: str = ""
+    VERCEL_TEAM_ID: str = ""
     APP_URL: str = "http://localhost:3000"
     PUBLIC_PORTFOLIO_URL: str = "http://localhost:3000"
     API_URL: str = "http://localhost:8000"

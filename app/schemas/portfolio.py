@@ -89,3 +89,9 @@ class TemplateSettingsIn(BaseModel):
     font: str | None = Field(default=None, max_length=40)
     hidden: list[str] | None = None
     section_order: list[str] | None = None
+    ga_id: str | None = Field(default=None, max_length=40)
+    pixel_id: str | None = Field(default=None, max_length=40)
+
+
+class AccessIn(BaseModel):
+    password: str | None = Field(default=None, max_length=100)

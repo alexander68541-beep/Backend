@@ -32,6 +32,7 @@ class Portfolio(Base, TimestampMixin):
     settings: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=text("'{}'"))
     published_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     published_at: Mapped["datetime | None"] = mapped_column(DateTime(timezone=True), nullable=True)
+    access_password: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_primary: Mapped[bool] = mapped_column(nullable=False, server_default=text("true"))
     template: Mapped[str] = mapped_column(String(40), nullable=False, server_default=text("'minimal'"))
     accent: Mapped[str] = mapped_column(String(9), nullable=False, server_default=text("'#7c6cff'"))
