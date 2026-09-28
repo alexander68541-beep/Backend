@@ -332,13 +332,10 @@ async def social_counts(username: str, db: AsyncSession = Depends(get_db)):
 
 
 async def _full_public_dict(db: AsyncSession, pf, data) -> dict:
+    # Always serve LIVE data so every edit is reflected instantly (no manual re-publish).
     owner = await db.get(Profile, pf.user_id)
     s = await db.get(PlatformSettings, 1)
     hide = bool(owner) and has_feature("remove_branding", (s.plans if s else []), owner.role, owner.plan)
-    if pf.published_data:
-        d = dict(pf.published_data)
-        d["hide_branding"] = hide  # live branding
-        return d
     return _serialize(data, hide_branding=hide).model_dump(mode="json")
 
 

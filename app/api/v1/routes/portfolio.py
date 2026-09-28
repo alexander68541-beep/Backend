@@ -72,8 +72,6 @@ async def update_status(
     portfolio = await portfolio_service.update_status(db, portfolio, payload.status)
     if portfolio.status == "published":
         from datetime import datetime, timezone
-        from app.api.v1.routes.public import build_snapshot
-        portfolio.published_data = await build_snapshot(db, portfolio)
         portfolio.published_at = datetime.now(timezone.utc)
         await db.commit()
         await db.refresh(portfolio)
